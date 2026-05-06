@@ -1,59 +1,53 @@
 # QUEM DA MAIS - Leilão em Live 🔨💜
+[quemdamais.pages.dev](https://quemdamais.pages.dev/)
 
-O **QUEM DA MAIS** é um sistema profissional e interativo de gerenciamento de leilões em tempo real, projetado especificamente para streamers e criadores de conteúdo que desejam engajar sua audiência através de metas, votações financeiras ou arrecadações para caridade.
+O **QUEM DA MAIS** é um sistema de LEILÃO para streamers, projetado para criadores de conteúdo que desejam engajar sua audiência através votações financeiras, permitindo que o público influencie diretamente o conteúdo da live através de lances.
 
-Com uma estética moderna inspirada na Twitch, o app permite que o público influencie diretamente o conteúdo da live através de lances.
+## 🔒 Privacidade e Dados
+*   **Sem Integrações Externas:** O Sistema depende de uma pessoa adicioando os lances manualmente. não há conexão com serviços de terceiros para processar lances.
+*   **Sem Login:** Não é necessário criar conta ou realizar login. Nenhum dado pessoal é solicitado ou armazenado.
+*   **Armazenamento Local:** Nenhum dado é salvo em bancos de dados externos. Toda a sessão do leilão é salva exclusivamente no **cache local (LocalStorage)** do seu navegador. Se você limpar os dados do navegador ou trocar de computador, os dados serão perdidos.
 
 ## 🚀 Principais Funcionalidades
 
-### 1. Sistema de Lances Duplo
+### 1. Sistema de Lances e Lances Impotores
 *   **Lance Normal (+):** Aumenta o valor acumulado de um jogo ou atividade, ajudando-o a subir no ranking.
-*   **Lance Impostor (-):** Uma mecânica de "troll" ou sabotagem onde o lance diminui o valor de um jogo específico, mas **continua somando no valor total acumulado** da live. Ideal para criar disputas saudáveis no chat!
+*   **Lance Impostor (-):** Uma mecânica de "troll" onde o lance diminui o valor de um jogo específico.
 
-### 2. Gestão Dinâmica de Jogos
-*   **Busca Inteligente:** Integração com banco de dados para puxar automaticamente capas (posters) e nomes oficiais de jogos de PC.
-*   **Adição Manual:** Suporte para adicionar jogos de consoles antigos (PS2, Retro), atividades personalizadas (ex: "Streamer paga 10 flexões") ou qualquer outra meta.
-*   **Edição Completa:** Permite trocar nomes e URLs de imagens a qualquer momento para personalizar o visual da live.
+### 2. Gestão Dinâmica de Jogos/Atividades
+*   **Busca de Jogos:** Pesquisa rápida com capas oficiais.
+*   **Adição Manual:** Suporte para atividades personalizadas (ex: "Assistir Filme", "Live de IRL", etc).
 
 ### 3. Painel de Auditoria e Controle
-*   **Histórico de Lances:** Lista completa de todas as movimentações financeiras.
-*   **Edição de Lances:** Corrija valores ou mude o destino de um lance caso o doador mude de ideia, com recalque automático de todos os rankings.
-*   **Ranking de Doadores:** Destaque para os maiores apoiadores (Top 5 Donators) da sessão.
-
-### 4. Ferramentas Integradas
-*   **Timer Setável:** Cronômetro customizável para gerenciar o tempo das rodadas ou metas da live, com funções de iniciar, pausar e resetar.
-*   **Visual "Stream-Ready":**
-    *   **Ranking em Tempo Real:** Jogos são ordenados automaticamente com animações fluidas de subida/descida.
-    *   **Destaque de Medalhas:** Ranking de 1º, 2º e 3º lugar com cores temáticas (Ouro, Prata e Bronze).
-    *   **Contadores Globais:** Exibição clara do valor total arrecadado.
+*   **Histórico de Lances:** Lista completa de todas as movimentações com filtros por jogo.
+*   **Edição de Lances:** Corrija valores ou mude o destino de um lance.
+*   **Ranking de Doadores:** Destaque para os maiores apoiadores da sessão do leilão.
+*   **Design reativo:** O site da match com a estética do seu canal na twitch (sem necessidade de login).
 
 ## 🛠️ Tecnologias Utilizadas
 *   **React + TypeScript:** Interface robusta e performática.
 *   **Tailwind CSS:** Estilização moderna e responsiva.
-*   **Motion (Framer Motion):** Animações fluidas para transições de ranking e modais com `layout projections`.
-*   **Lucide React:** Conjunto de ícones minimalistas.
-*   **LocalStorage:** Persistência de dados local.
-*   **API IGDB (via Twitch Auth):** Integração para busca de dados precisos de jogos, capas em alta resolução e informações de lançamento.
-*   **API Pública (IVR):** Integração direta para busca de dados de canais da Twitch.
+*   **Motion:** Animações fluidas para transições de ranking.
+*   **LocalStorage:** Persistência de dados totalmente local.
+*   **APIs:** IGDB API e IVR API.
+
+## 💻 Como usar em Localhost
+
+Se você deseja rodar o projeto localmente em sua máquina:
+
+1.  **Pré-requisitos:** Certifique-se de ter o [Node.js](https://nodejs.org/) instalado.
+2.  **Clone o repositório ou baixe os arquivos.**
+3.  **Instale as dependências:**
+    ```bash
+    npm install
+    ```
+4.  **Inicie o servidor de desenvolvimento:**
+    ```bash
+    npm run dev
+    ```
+5.  **Acesse no navegador:**
+    Abra `http://localhost:3000` (ou a porta indicada no terminal).
 
 ---
-
-## ⚙️ Configuração (Variáveis de Ambiente)
-Este projeto utiliza a API da IGDB via **Cloudflare Pages Functions**.
-
-### No Cloudflare Dashboard (Produção):
-Acesse **Settings > Environment Variables** no seu projeto Pages e adicione:
-*   `TWITCH_CLIENT_ID`: Seu Client ID da Twitch.
-*   `TWITCH_CLIENT_SECRET`: Seu Client Secret da Twitch.
-
-### No Ambiente Local:
-Crie um arquivo `.env` na raiz com o prefixo `VITE_`:
-```env
-VITE_TWITCH_CLIENT_ID=seu_id
-VITE_TWITCH_CLIENT_SECRET=sua_secret
-```
-
----
-*Desenvolvido para transformar donation alerts em entretenimento real.*
 
 **Este site foi totalmente construído com Inteligência Artificial.**
