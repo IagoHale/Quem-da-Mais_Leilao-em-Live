@@ -18,7 +18,7 @@ export function LeftSidebar({
   sortedDonators,
 }: LeftSidebarProps) {
   return (
-    <aside className="w-full lg:w-64 flex-shrink-0 space-y-6 order-2 lg:order-1">
+    <aside className="w-full lg:w-80 flex-shrink-0 space-y-6 order-2 lg:order-1">
       <div className="liquidglass rounded-2xl p-5 shadow-xl transition-all hover:border-white/20">
         <div className="flex items-center gap-3 mb-4 border-b border-white/5 pb-3">
           <Twitch className="w-4 h-4 text-twitch" />
@@ -40,7 +40,12 @@ export function LeftSidebar({
               </motion.div>
               <div className="min-w-0">
                 <p className="text-sm font-black text-white uppercase tracking-wider truncate mb-1">{streamerInfo.display_name}</p>
-                <a href={`https://twitch.tv/${streamerInfo.login}`} target="_blank" rel="noreferrer" className="text-[10px] text-twitch font-bold hover:underline flex items-center gap-1">
+                <a 
+                  href={`https://twitch.tv/${streamerInfo.login}`} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="text-[10px] text-twitch font-bold hover:underline truncate block"
+                >
                   twitch.tv/{streamerInfo.login}
                 </a>
               </div>
@@ -100,7 +105,7 @@ export function LeftSidebar({
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <span
-                      className={`text-[10px] font-black w-5 h-5 rounded flex items-center justify-center border ${
+                      className={`text-[10px] font-black w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border ${
                         isGold
                           ? 'bg-yellow-500 text-black border-yellow-400'
                           : isSilver
@@ -113,15 +118,16 @@ export function LeftSidebar({
                       {idx + 1}
                     </span>
                     <span
-                      className={`text-sm font-bold truncate transition-colors ${
+                      className={`text-sm font-bold truncate min-w-0 transition-colors ${
                         isGold ? 'text-yellow-200' : isSilver ? 'text-neutral-200' : isBronze ? 'text-amber-200' : 'text-neutral-300 group-hover:text-twitch'
                       }`}
+                      title={donator.name}
                     >
                       {donator.name}
                     </span>
                   </div>
                   <span
-                    className={`font-mono text-xs font-black italic ${
+                    className={`font-mono text-xs font-black italic flex-shrink-0 ml-2 ${
                       isGold ? 'text-yellow-500' : isSilver ? 'text-neutral-300' : isBronze ? 'text-amber-600' : 'text-emerald-500/80'
                     }`}
                   >

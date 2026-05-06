@@ -241,13 +241,13 @@ export default function App() {
       <input ref={importInputRef} type="file" accept="application/json" onChange={handleImportSessionFile} className="hidden" />
 
       {/* Background Banner (Prioriza a capa do canal, se não tiver usa o banner offline) */}
-      {(streamerInfo?.banner_url || streamerInfo?.offline_image_url || streamerInfo?.profile_image_url) && (
+      {(streamerInfo?.banner_url || streamerInfo?.offline_image_url) && (
         <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
           <motion.img 
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.4 }}
-            key={streamerInfo.banner_url || streamerInfo.profile_image_url}
-            src={streamerInfo.banner_url || streamerInfo.offline_image_url || streamerInfo.profile_image_url} 
+            key={streamerInfo.banner_url || streamerInfo.offline_image_url}
+            src={streamerInfo.banner_url || streamerInfo.offline_image_url} 
             className="w-full h-full object-cover"
             alt=""
           />

@@ -57,11 +57,12 @@ export function BidDonatorModal({
                 <button
                   key={donator.name}
                   onClick={() => setName(donator.name)}
-                  className={`px-2.5 py-1 sm:px-3 sm:py-1.5 border rounded-lg text-[9px] sm:text-[10px] font-bold transition-all ${
+                  className={`px-2.5 py-1 sm:px-3 sm:py-1.5 border rounded-lg text-[9px] sm:text-[10px] font-bold transition-all max-w-full truncate ${
                     name === donator.name
                       ? 'bg-twitch border-twitch text-white'
                       : 'bg-white/5 border-white/5 text-neutral-400 hover:border-white/10 hover:text-white'
                   }`}
+                  title={donator.name}
                 >
                   {donator.name}
                 </button>

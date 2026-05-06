@@ -96,28 +96,28 @@ export function AuctionStatsModal({
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="liquidglass rounded-[1.35rem] border p-3.5" style={themedPanelStyle}>
+          <div className="grid gap-4 md:grid-cols-[repeat(3,minmax(0,1fr))]">
+            <div className="liquidglass rounded-[1.35rem] border p-3.5 min-w-0" style={themedPanelStyle}>
               <div className="flex items-center gap-2">
                 <Medal className="h-4 w-4 text-amber-300" />
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">Jogo vencedor</p>
               </div>
-              <p className="mt-2 text-lg font-black text-white">
+              <p className="mt-2 text-lg font-black text-white truncate" title={stats.topGames[0]?.name ?? ''}>
                 {stats.topGames[0]?.name ?? 'Sem vencedor'}
               </p>
               {stats.topGames[0] && <p className={`mt-2 text-xs ${valueClassName}`}>R$ {stats.topGames[0].value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>}
             </div>
-            <div className="liquidglass rounded-[1.35rem] border p-3.5" style={themedPanelStyle}>
+            <div className="liquidglass rounded-[1.35rem] border p-3.5 min-w-0" style={themedPanelStyle}>
               <div className="flex items-center gap-2">
                 <Ghost className="h-4 w-4 text-rose-300" />
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">Jogo mais sabotado</p>
               </div>
-              <p className="mt-2 text-lg font-black text-white">{stats.mostSabotagedGame?.name ?? 'Sem sabotagem'}</p>
+              <p className="mt-2 text-lg font-black text-white truncate" title={stats.mostSabotagedGame?.name ?? ''}>{stats.mostSabotagedGame?.name ?? 'Sem sabotagem'}</p>
               {stats.mostSabotagedGame && stats.mostSabotagedGame.sabotageTotal > 0 && (
                 <p className={`mt-2 text-xs ${valueClassName}`}>R$ {stats.mostSabotagedGame.sabotageTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} derrubados</p>
               )}
             </div>
-            <div className="liquidglass rounded-[1.35rem] border p-3.5" style={themedPanelStyle}>
+            <div className="liquidglass rounded-[1.35rem] border p-3.5 min-w-0" style={themedPanelStyle}>
               <div className="flex items-center gap-2">
                 <Flame className="h-4 w-4 text-emerald-300" />
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">Maior lance</p>
@@ -125,7 +125,7 @@ export function AuctionStatsModal({
               {stats.biggestBid ? (
                 <>
                   <p className={`mt-2 text-2xl ${valueClassName}`}>R$ {stats.biggestBid.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                  <p className="mt-2 text-xs text-neutral-300">{stats.biggestBid.donatorName}</p>
+                  <p className="mt-2 text-xs text-neutral-300 truncate" title={stats.biggestBid.donatorName}>{stats.biggestBid.donatorName}</p>
                 </>
               ) : (
                 <p className="mt-2 text-2xl font-black text-white">Sem dados</p>
@@ -133,8 +133,8 @@ export function AuctionStatsModal({
             </div>
           </div>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="liquidglass rounded-[1.7rem] border p-4" style={themedPanelStyle}>
+          <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.11fr)_minmax(0,0.89fr)]">
+            <div className="liquidglass rounded-[1.7rem] border p-4 min-w-0" style={themedPanelStyle}>
               <div className="mb-5 flex items-center gap-3">
                 <Crown className="h-5 w-5" style={themedIconStyle} />
                 <div>
@@ -148,27 +148,27 @@ export function AuctionStatsModal({
                   <p className="rounded-2xl border border-dashed border-white/10 py-8 text-center text-sm text-neutral-500">Nenhum lance registrado.</p>
                 ) : (
                   stats.topDonators.map((donator, index) => (
-                    <div key={donator.name} className="liquidglass flex items-center justify-between rounded-[1.15rem] border px-3.5 py-2.5" style={themedSoftCardStyle}>
-                      <div className="flex items-center gap-3">
+                    <div key={donator.name} className="liquidglass flex items-center justify-between gap-4 rounded-[1.15rem] border px-3.5 py-2.5" style={themedSoftCardStyle}>
+                      <div className="flex items-center gap-3 min-w-0">
                         <div
-                          className="flex h-9 w-9 items-center justify-center rounded-xl text-xs font-black text-white"
+                          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-xs font-black text-white"
                           style={{ background: 'color-mix(in srgb, var(--color-twitch) 22%, rgba(255,255,255,0.06))' }}
                         >
                           {index + 1}
                         </div>
-                        <div>
-                          <p className="text-lg font-black text-white">{donator.name}</p>
+                        <div className="min-w-0">
+                          <p className="truncate text-lg font-black text-white" title={donator.name}>{donator.name}</p>
                         </div>
                       </div>
-                      <p className={valueClassName}>R$ {donator.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                      <p className={`${valueClassName} flex-shrink-0`}>R$ {donator.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                     </div>
                   ))
                 )}
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="liquidglass rounded-[1.7rem] border p-4" style={themedPanelStyle}>
+            <div className="space-y-6 min-w-0">
+              <div className="liquidglass rounded-[1.7rem] border p-4 min-w-0" style={themedPanelStyle}>
                 <div className="mb-4 flex items-center gap-3">
                   <Medal className="h-5 w-5" style={themedIconStyle} />
                   <div>
@@ -182,12 +182,12 @@ export function AuctionStatsModal({
                     <p className="rounded-2xl border border-dashed border-white/10 py-6 text-center text-sm text-neutral-500">Sem jogos no leilão.</p>
                   ) : (
                     stats.topGames.map((game, index) => (
-                      <div key={game.id} className="liquidglass rounded-[1.15rem] border px-3.5 py-2" style={themedSoftCardStyle}>
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="min-w-0 truncate text-sm font-bold text-white">
+                      <div key={game.id} className="liquidglass rounded-[1.15rem] border px-3.5 py-2 min-w-0" style={themedSoftCardStyle}>
+                        <div className="flex items-center justify-between gap-3 min-w-0">
+                          <p className="min-w-0 truncate text-sm font-bold text-white" title={game.name}>
                             {index + 1}. {game.name}
                           </p>
-                          <p className={valueClassName}>R$ {game.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                          <p className={`${valueClassName} flex-shrink-0`}>R$ {game.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                         </div>
                       </div>
                     ))
@@ -200,17 +200,17 @@ export function AuctionStatsModal({
                   <h3 className="text-lg font-bold text-white">Sabotadores</h3>
                 </div>
                 <div className="mt-4 grid gap-2">
-                  <div className="liquidglass rounded-[1.15rem] border p-2.5 text-sm text-neutral-300" style={themedSoftCardStyle}>
-                    <p className="font-bold text-white">
+                  <div className="liquidglass rounded-[1.15rem] border p-2.5 text-sm text-neutral-300 min-w-0" style={themedSoftCardStyle}>
+                    <p className="font-bold text-white break-words">
                       {stats.biggestSabotator
-                        ? <>Maior sabotador: {stats.biggestSabotator.name} sabotou um total de <span className={sabotageValueClassName}>R$ {stats.biggestSabotator.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>.</>
+                        ? <>Maior sabotador: <span className="text-white">{stats.biggestSabotator.name}</span> sabotou um total de <span className={sabotageValueClassName}>R$ {stats.biggestSabotator.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>.</>
                         : 'Nenhuma sabotagem foi registrada nesta sessão.'}
                     </p>
                   </div>
-                  <div className="liquidglass rounded-[1.15rem] border p-2.5 text-sm text-neutral-300" style={themedSoftCardStyle}>
-                    <p className="font-bold text-white">
+                  <div className="liquidglass rounded-[1.15rem] border p-2.5 text-sm text-neutral-300 min-w-0" style={themedSoftCardStyle}>
+                    <p className="font-bold text-white break-words">
                       {stats.biggestImposterBid
-                        ? <>Maior golpe: {stats.biggestImposterBid.donatorName} sabotou <span className={sabotageValueClassName}>R$ {Math.abs(stats.biggestImposterBid.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span> em {stats.biggestImposterBid.gameName} de uma vez.</>
+                        ? <>Maior golpe: <span className="text-white">{stats.biggestImposterBid.donatorName}</span> sabotou <span className={sabotageValueClassName}>R$ {Math.abs(stats.biggestImposterBid.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span> em <span className="text-white">{stats.biggestImposterBid.gameName}</span> de uma vez.</>
                         : 'Nenhum golpe unico foi registrado nesta sessão.'}
                     </p>
                   </div>

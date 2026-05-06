@@ -31,7 +31,7 @@ export function EditDonationModal({
         className="liquidglass rounded-[2.5rem] p-0 max-w-4xl w-full shadow-2xl transition-all border-white/10 overflow-hidden max-h-[95vh] flex"
       >
         <div className="flex flex-col md:flex-row w-full overflow-y-auto custom-scrollbar">
-          <div className="flex-1 p-6 sm:p-8 md:p-10 border-r border-white/5 bg-white/[0.01]">
+          <div className="flex-1 min-w-0 p-6 sm:p-8 md:p-10 border-r border-white/5 bg-white/[0.01]">
             <div className="flex items-center gap-4 mb-6 sm:mb-10">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
                 <Pencil className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -45,9 +45,9 @@ export function EditDonationModal({
             <div className="space-y-6 sm:space-y-8">
               <div className="space-y-2 sm:space-y-3">
                 <label className="text-[9px] sm:text-[10px] font-black text-neutral-600 uppercase tracking-widest pl-1">Doador Original</label>
-                <div className="w-full bg-black/40 border border-white/5 rounded-2xl px-4 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-neutral-400 font-bold flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-[#9146FF]" />
-                  {donation.donatorName}
+                <div className="w-full bg-black/40 border border-white/5 rounded-2xl px-4 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-neutral-400 font-bold flex items-center gap-3 min-w-0">
+                  <div className="w-2 h-2 rounded-full bg-[#9146FF] flex-shrink-0" />
+                  <span className="truncate min-w-0" title={donation.donatorName}>{donation.donatorName}</span>
                 </div>
                 <p className="text-[8px] sm:text-[9px] text-neutral-600 font-bold italic ml-1">* O nome do doador não pode ser alterado.</p>
               </div>
@@ -89,7 +89,7 @@ export function EditDonationModal({
             </div>
           </div>
 
-          <div className="flex-1 p-6 sm:p-8 md:p-10 bg-black/20">
+          <div className="flex-1 min-w-0 p-6 sm:p-8 md:p-10 bg-black/20">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div className="flex flex-col">
                 <label className="text-[9px] sm:text-[10px] font-black text-neutral-500 uppercase tracking-widest">Alterar Destino</label>
@@ -111,7 +111,7 @@ export function EditDonationModal({
                   <button
                     key={game.id}
                     onClick={() => setSelectedGameId(game.id)}
-                    className={`group relative flex items-center gap-4 px-4 py-4 rounded-2xl text-left text-sm font-bold transition-all border ${
+                    className={`group relative flex items-center gap-4 px-4 py-4 rounded-2xl text-left text-sm font-bold transition-all border min-w-0 w-full ${
                       selectedGameId === game.id
                         ? 'bg-twitch border-twitch text-white shadow-lg shadow-twitch/20'
                         : 'bg-[#1f1f23] border-white/5 text-neutral-400 hover:border-white/10 hover:text-neutral-200'
@@ -122,7 +122,7 @@ export function EditDonationModal({
                         <img src={game.imageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       </div>
                     )}
-                    <span className="truncate">{game.name}</span>
+                    <span className="truncate min-w-0">{game.name}</span>
                     {selectedGameId === game.id && (
                       <div className="ml-auto w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
                         <Plus className="w-3 h-3 text-white" />

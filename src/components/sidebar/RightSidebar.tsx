@@ -43,7 +43,7 @@ export function RightSidebar({
   const filteredDonations = donations.filter((donation) => (historyFilter === 'all' ? true : donation.gameId === historyFilter));
 
   return (
-    <aside className="w-full lg:w-64 flex-shrink-0 space-y-6 order-3">
+    <aside className="w-full lg:w-80 flex-shrink-0 space-y-6 order-3">
       <div className="liquidglass rounded-2xl p-5 shadow-xl transition-all hover:border-white/20">
         <div className="flex items-center gap-3 mb-4 border-b border-white/5 pb-3">
           <Timer className="w-4 h-4 text-twitch" />
