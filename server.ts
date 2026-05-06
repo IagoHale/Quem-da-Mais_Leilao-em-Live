@@ -2,6 +2,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import cors from "cors";
+import { fetchTwitchAccessToken, getTwitchCredentials, searchIgdbGames } from "./src/server/igdb";
 
 const app = express();
 const PORT = 3000;
@@ -14,10 +15,9 @@ let twitchAccessToken: string | null = null;
 let tokenExpiry: number = 0;
 
 async function getTwitchToken() {
-  const clientId = process.env.VITE_TWITCH_CLIENT_ID || process.env.TWITCH_CLIENT_ID;
-  const clientSecret = process.env.VITE_TWITCH_CLIENT_SECRET || process.env.TWITCH_CLIENT_SECRET;
+  const credentials = getTwitchCredentials(process.env);
 
-  if (!clientId || !clientSecret) {
+  if (!credentials) {
     console.error("ERRO: VITE_TWITCH_CLIENT_ID ou VITE_TWITCH_CLIENT_SECRET não definidos no ambiente.");
     return null;
   }
@@ -27,11 +27,7 @@ async function getTwitchToken() {
   }
 
   try {
-    const response = await fetch(
-      `https://id.twitch.tv/oauth2/token?client_id=${clientId}&client_secret=${clientSecret}&grant_type=client_credentials`,
-      { method: "POST" }
-    );
-    const data = await response.json();
+    const data = await fetchTwitchAccessToken(credentials);
     twitchAccessToken = data.access_token;
     tokenExpiry = Date.now() + (data.expires_in - 60) * 1000; // Expira 1 min antes por segurança
     return twitchAccessToken;
@@ -47,50 +43,15 @@ app.get("/api/games/search", async (req, res) => {
   if (!q) return res.status(400).json({ error: "Query de busca vazia" });
 
   const token = await getTwitchToken();
-  const clientId = process.env.VITE_TWITCH_CLIENT_ID;
+  const credentials = getTwitchCredentials(process.env);
+  const clientId = credentials?.clientId;
 
   if (!token || !clientId) {
     return res.status(500).json({ error: "Configuração da API da Twitch incompleta" });
   }
 
   try {
-    // Busca na IGDB: Nome, Capa e Data de lançamento
-    const query = `
-      search "${q}";
-      fields name, cover.url, first_release_date;
-      limit 5;
-    `;
-
-    const response = await fetch("https://api.igdb.com/v4/games", {
-      method: "POST",
-      headers: {
-        "Client-ID": clientId,
-        "Authorization": `Bearer ${token}`,
-      },
-      body: query,
-    });
-
-    const data = await response.json();
-    
-    // Formatar os resultados para o frontend
-    const formattedData = data.map((game: any) => {
-      let thumb = undefined;
-      if (game.cover?.url) {
-        // Garantir protocolo HTTPS e trocar para tamanho de capa grande
-        thumb = game.cover.url.startsWith('//') 
-          ? `https:${game.cover.url}` 
-          : game.cover.url;
-        thumb = thumb.replace('t_thumb', 't_cover_big');
-      }
-
-      return {
-        id: game.id,
-        name: game.name,
-        thumb,
-        year: game.first_release_date ? new Date(game.first_release_date * 1000).getFullYear() : null
-      };
-    });
-
+    const formattedData = await searchIgdbGames(String(q), token, clientId);
     res.json(formattedData);
   } catch (error) {
     console.error("Erro na busca IGDB:", error);

@@ -31,7 +31,7 @@ O **QUEM DA MAIS** é um sistema de LEILÃO para streamers, projetado para criad
 *   **LocalStorage:** Persistência de dados totalmente local.
 *   **APIs:** IGDB API e IVR API.
 
-## 💻 Como usar em Localhost
+## 💻 Execução Local
 
 Se você deseja rodar o projeto localmente em sua máquina:
 
@@ -41,13 +41,12 @@ Se você deseja rodar o projeto localmente em sua máquina:
     ```bash
     npm install
     ```
-4.  **Inicie o servidor de desenvolvimento:**
+4.  **Configure o ambiente local** em `.env` usando o modelo de `.env.example`.
+5.  **Inicie o servidor local com Vite middleware + API Express:**
     ```bash
     npm run dev
     ```
-5.  **Acesse no navegador:**
-    Abra `http://localhost:3000` (ou a porta indicada no terminal).
-
----
+6.  **Acesse no navegador:**
+    Abra `http://localhost:3000`.
 
 **Este site foi totalmente construído com Inteligência Artificial.**
