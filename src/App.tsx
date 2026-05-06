@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Trophy, Plus, RotateCcw, Gavel, DollarSign, Target, TrendingUp, AlertTriangle, Search, Loader2, History, Pencil, Ghost, Github, Eye, EyeOff, Settings, Twitch } from 'lucide-react';
+import { Trophy, Plus, RotateCcw, Gavel, DollarSign, Target, TrendingUp, AlertTriangle, Search, Loader2, History, Pencil, Ghost, Github, Eye, EyeOff, Settings, Twitch, Timer, Play, Pause } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 type Game = {
@@ -61,11 +61,65 @@ export default function App() {
     display_name: string;
     profile_image_url: string;
     offline_image_url: string;
+    banner_url?: string;
+    primaryColorHex?: string;
+    login?: string;
   } | null>(() => {
     const saved = localStorage.getItem('streamerInfo');
     return saved ? JSON.parse(saved) : null;
   });
-  const [pendingBid, setPendingBid] = useState<{ gameId: string, amount: number } | null>(null);
+  // Efeito para injetar a cor primária do streamer no CSS
+  useEffect(() => {
+    if (streamerInfo?.primaryColorHex) {
+      document.documentElement.style.setProperty('--color-twitch', streamerInfo.primaryColorHex);
+      // Calcula uma versão mais escura para o hover, se possível, ou usa a mesma
+      document.documentElement.style.setProperty('--color-twitch-dark', streamerInfo.primaryColorHex + 'CC');
+    } else {
+      // Volta para o roxo padrão se não houver cor customizada
+      document.documentElement.style.setProperty('--color-twitch', '#9146FF');
+      document.documentElement.style.setProperty('--color-twitch-dark', '#772ce8');
+    }
+  }, [streamerInfo]);
+
+  const [timerSeconds, setTimerSeconds] = useState<number>(0);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [timerInput, setTimerInput] = useState("05:00");
+
+  useEffect(() => {
+    let interval: any;
+    if (isTimerRunning && timerSeconds > 0) {
+      interval = setInterval(() => {
+        setTimerSeconds((prev) => prev - 1);
+      }, 1000);
+    } else if (timerSeconds === 0) {
+      setIsTimerRunning(false);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning, timerSeconds]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleStartTimer = () => {
+    if (isTimerRunning) {
+      setIsTimerRunning(false);
+    } else {
+      const [m, s] = timerInput.split(':').map(Number);
+      if (!isNaN(m) && !isNaN(s)) {
+        if (timerSeconds === 0) setTimerSeconds(m * 60 + s);
+        setIsTimerRunning(true);
+      }
+    }
+  };
+
+  const handleResetTimer = () => {
+    setIsTimerRunning(false);
+    const [m, s] = timerInput.split(':').map(Number);
+    setTimerSeconds(m * 60 + s);
+  };
   
   // Helper to calculate leader of a specific game
   const calculateLeader = (gameId: string, allDonations: Donation[]) => {
@@ -347,7 +401,7 @@ export default function App() {
   const sortedDonators = [...donators].sort((a, b) => b.total - a.total).slice(0, 5);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0e0e10] text-[#efeff1] font-sans selection:bg-[#9146FF]/30 relative overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-[#0e0e10] text-[#efeff1] font-sans selection:bg-twitch/30 relative overflow-x-hidden">
       {/* Background Banner (Prioriza a capa do canal, se não tiver usa o banner offline) */}
       {(streamerInfo?.banner_url || streamerInfo?.offline_image_url || streamerInfo?.profile_image_url) && (
         <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
@@ -364,18 +418,18 @@ export default function App() {
       )}
 
       <header className="sticky top-0 z-50 liquidglass shadow-none relative backdrop-blur-3xl !border-none border-0">
-        <div className="w-full max-w-[1800px] mx-auto px-4 py-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-h-[72px]">
+        <div className="w-full max-w-[1500px] mx-auto px-4 py-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-h-[72px]">
           {/* Lado Esquerdo: Logo */}
           <div className="flex items-center gap-3">
             <motion.div 
               whileHover={{ rotate: 10, scale: 1.1 }}
-              className="bg-[#9146FF] p-2 rounded-xl shadow-[0_0_20px_rgba(145,70,255,0.4)] flex-shrink-0"
+              className="bg-twitch p-2 rounded-xl shadow-[0_0_20px_var(--color-twitch)] flex-shrink-0"
             >
               <Gavel className="w-5 h-5 text-white" />
             </motion.div>
             <h1 className="text-lg font-display font-bold tracking-tight text-white uppercase flex flex-col leading-none">
               QUEM DA MAIS
-              <span className="text-[#9146FF] text-[8px] tracking-[0.2em] font-black opacity-60">LEILÃO EM LIVE</span>
+              <span className="text-twitch text-[8px] tracking-[0.2em] font-black opacity-60">LEILÃO EM LIVE</span>
             </h1>
           </div>
           
@@ -416,12 +470,12 @@ export default function App() {
         </div>
       </header>
 
-      <div className="w-full max-w-[1800px] mx-auto px-4 py-6 flex flex-col lg:flex-row gap-10 relative z-10 flex-grow">
+      <div className="w-full max-w-[1500px] mx-auto px-4 py-6 flex flex-col lg:flex-row gap-10 relative z-10 flex-grow">
         {/* Sidebar Left: Maiores Arrematadores */}
         <aside className="w-full lg:w-64 flex-shrink-0 space-y-6 order-2 lg:order-1">
           <div className="liquidglass rounded-2xl p-5 shadow-xl transition-all hover:border-white/20">
             <div className="flex items-center gap-3 mb-4 border-b border-white/5 pb-3">
-              <Twitch className="w-4 h-4 text-[#9146FF]" />
+              <Twitch className="w-4 h-4 text-twitch" />
               <div className="flex-1 flex items-center justify-between">
                 <h2 className="text-xs font-black uppercase tracking-[0.2em] text-neutral-400">Host do leilão</h2>
                 {streamerInfo && (
@@ -444,7 +498,7 @@ export default function App() {
                   <motion.div 
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="w-12 h-12 rounded-full border-2 border-[#9146FF] p-0.5 overflow-hidden flex-shrink-0"
+                    className="w-24 h-24 rounded-full border-2 border-twitch p-0.5 overflow-hidden flex-shrink-0"
                   >
                     <img src={streamerInfo.profile_image_url} alt={streamerInfo.display_name} className="w-full h-full object-cover rounded-full" />
                   </motion.div>
@@ -456,7 +510,7 @@ export default function App() {
                       href={`https://twitch.tv/${streamerInfo.login}`} 
                       target="_blank" 
                       rel="noreferrer"
-                      className="text-[10px] text-[#9146FF] font-bold hover:underline flex items-center gap-1"
+                      className="text-[10px] text-twitch font-bold hover:underline flex items-center gap-1"
                     >
                       twitch.tv/{streamerInfo.login}
                     </a>
@@ -468,7 +522,7 @@ export default function App() {
                     <input
                       type="text"
                       placeholder="Nick da Twitch..."
-                      className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-2 text-xs text-white placeholder:text-neutral-700 focus:outline-none focus:ring-1 focus:ring-[#9146FF] transition-all"
+                      className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-2 text-xs text-white placeholder:text-neutral-700 focus:outline-none focus:ring-1 focus:ring-twitch transition-all"
                       onKeyDown={async (e) => {
                         if (e.key === 'Enter') {
                           const login = e.currentTarget.value.trim();
@@ -476,7 +530,7 @@ export default function App() {
                           
                           setIsLinking(true);
                           try {
-                            const res = await fetch(`/api/twitch/user/${login}`);
+                            const res = await fetch(`/api/public/user/${login}`);
                             const data = await res.json();
                             
                             if (data.error) throw new Error(data.error);
@@ -494,7 +548,7 @@ export default function App() {
                     />
                     {isLinking && (
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <Loader2 className="w-3 h-3 text-[#9146FF] animate-spin" />
+                        <Loader2 className="w-3 h-3 text-twitch animate-spin" />
                       </div>
                     )}
                   </div>
@@ -524,7 +578,7 @@ export default function App() {
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <span className={`text-[10px] font-black ${idx === 0 ? 'text-yellow-500' : 'text-neutral-700'}`}>0{idx + 1}</span>
-                      <span className="text-sm font-bold truncate group-hover:text-[#9146FF] transition-colors">{donator.name}</span>
+                      <span className="text-sm font-bold truncate group-hover:text-twitch transition-colors">{donator.name}</span>
                     </div>
                     <span className="font-mono text-xs font-bold text-emerald-500/80 italic">
                       R$ {donator.total.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
@@ -634,7 +688,7 @@ export default function App() {
         </AnimatePresence>
 
         {/* Barra de Busca Compacta */}
-        <div ref={dropdownRef} className="mb-12 relative group z-40 w-full">
+        <div ref={dropdownRef} className="mb-4 relative group z-40 w-full">
           <form 
             onSubmit={(e) => { 
                 e.preventDefault(); 
@@ -647,12 +701,12 @@ export default function App() {
                 }
                 handleAddGame(newGameName, finalThumbnail); 
             }} 
-            className="relative liquidglass rounded-2xl p-1.5 flex items-center shadow-2xl focus-within:ring-2 focus-within:ring-[#9146FF]/30 transition-all overflow-hidden"
+            className="relative liquidglass rounded-2xl p-1.5 flex items-center shadow-2xl focus-within:ring-2 focus-within:ring-twitch/30 transition-all overflow-hidden"
           >
             <div className="absolute inset-0 bg-white/5 pointer-events-none" />
             <div className="relative z-10 flex items-center w-full">
               <div className="pl-4 pr-2 text-neutral-500">
-                  {isSearching ? <Loader2 className="w-5 h-5 text-[#9146FF] animate-spin" /> : <Search className="w-5 h-5" />}
+                  {isSearching ? <Loader2 className="w-5 h-5 text-twitch animate-spin" /> : <Search className="w-5 h-5" />}
               </div>
               <input
                 type="text"
@@ -670,7 +724,7 @@ export default function App() {
               <button
                 type="submit"
                 disabled={!newGameName.trim()}
-                className="bg-[#9146FF] hover:bg-[#a970ff] text-white px-4 py-2.5 rounded-xl font-bold uppercase tracking-tighter transition-all text-xs disabled:opacity-20 flex items-center justify-center gap-2 group/btn relative overflow-hidden"
+                className="bg-twitch hover:bg-twitch-dark text-white px-4 py-2.5 rounded-xl font-bold uppercase tracking-tighter transition-all text-xs disabled:opacity-20 flex items-center justify-center gap-2 group/btn relative overflow-hidden"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add</span>
@@ -689,7 +743,7 @@ export default function App() {
                 >
                     <div className="px-5 py-3 border-b border-white/5 bg-white/5 flex items-center justify-between">
                       <span className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Banco de Dados (PC)</span>
-                      {isSearching && <Loader2 className="w-3 h-3 text-[#9146FF] animate-spin" />}
+                      {isSearching && <Loader2 className="w-3 h-3 text-twitch animate-spin" />}
                     </div>
 
                     <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
@@ -716,7 +770,7 @@ export default function App() {
                                         />
                                     </div>
                                     <div className="min-w-0">
-                                      <span className="block font-bold text-[#efeff1] group-hover:text-[#9146FF] transition-colors truncate text-sm">
+                                      <span className="block font-bold text-[#efeff1] group-hover:text-twitch transition-colors truncate text-sm">
                                           {result.external}
                                       </span>
                                       <span className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest mt-0.5 block">Resultado Automático</span>
@@ -733,7 +787,7 @@ export default function App() {
                             className={`w-full flex items-center justify-between p-4 hover:bg-[#9146FF]/20 transition-all text-left group ${searchResults.length > 0 ? 'border-t border-white/5' : ''}`}
                         >
                             <div className="flex items-center gap-5">
-                                <div className="w-10 h-14 rounded-lg bg-white/5 flex items-center justify-center text-neutral-600 flex-shrink-0 group-hover:bg-[#9146FF]/30 group-hover:text-white transition-colors">
+                                <div className="w-10 h-14 rounded-lg bg-white/5 flex items-center justify-center text-neutral-600 flex-shrink-0 group-hover:bg-twitch/30 group-hover:text-white transition-colors">
                                     <Plus className="w-5 h-5" />
                                 </div>
                                 <div>
@@ -743,7 +797,7 @@ export default function App() {
                                   <span className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest mt-0.5 block">Para consoles ou atividades customizadas</span>
                                 </div>
                             </div>
-                            <span className="text-[9px] font-black text-[#9146FF] uppercase opacity-0 group-hover:opacity-100 transition-opacity">Add Manual</span>
+                            <span className="text-[9px] font-black text-twitch uppercase opacity-0 group-hover:opacity-100 transition-opacity">Add Manual</span>
                         </button>
                     </div>
                 </motion.div>
@@ -752,7 +806,7 @@ export default function App() {
         </div>
 
         {/* Lista de Jogos (Ranking) */}
-        <div className="flex flex-col gap-8 min-h-[600px] w-full flex-grow transition-all duration-500">
+        <div className="flex flex-col gap-4 min-h-[600px] w-full flex-grow transition-all duration-500">
           {games.length === 0 ? (
             <div className="w-full flex-1 text-center py-40 bg-white/[0.02] rounded-[3rem] border border-dashed border-white/10 flex flex-col items-center justify-center gap-6">
               <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center opacity-30">
@@ -764,7 +818,7 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col gap-6 relative">
+            <div className="flex flex-col gap-4 relative">
               <AnimatePresence mode="popLayout">
                 {sortedGames.map((game, index) => {
                   const isLeader = game.id === leadingGameId;
@@ -781,7 +835,7 @@ export default function App() {
                       transition={{ type: 'spring', stiffness: 400, damping: 35 }}
                       className={`relative group rounded-2xl transition-all duration-500 overflow-hidden liquidglass ${
                         isLeader 
-                          ? 'border-[#9146FF]/40 shadow-[0_0_40px_rgba(145,70,255,0.15)] ring-1 ring-[#9146FF]/20 hover:border-[#9146FF]/60' 
+                          ? 'border-twitch/40 shadow-[0_0_40px_var(--color-twitch)] ring-1 ring-twitch/20 hover:border-twitch/60' 
                           : 'hover:border-white/20'
                       }`}
                     >
@@ -791,12 +845,12 @@ export default function App() {
                           initial={{ width: 0 }}
                           animate={{ width: `${progressPercentage}%` }}
                           className={`absolute inset-y-0 left-0 z-0 opacity-[0.05] ${
-                            isLeader ? 'bg-[#9146FF]' : 'bg-emerald-500'
+                            isLeader ? 'bg-twitch' : 'bg-emerald-500'
                           }`}
                         />
                       )}
 
-                      <div className="relative z-10 p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
+                      <div className="relative z-10 p-3 sm:p-3.5 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
                         
                         {/* Rank Badge */}
                         <div className={`absolute -left-1 top-4 flex items-center justify-center w-8 h-8 rounded-lg font-mono font-black text-[10px] z-20 shadow-lg border border-white/10 rotate-[-12deg] ${
@@ -811,13 +865,13 @@ export default function App() {
                         {/* Informações Princiais */}
                         <div className="flex items-center gap-4 flex-1 w-full min-w-0">
                           {game.imageUrl ? (
-                              <div className={`w-16 h-24 sm:w-20 sm:h-28 rounded-xl overflow-hidden bg-black flex-shrink-0 border transition-all p-0.5 ${
-                                isLeader ? 'border-[#9146FF]' : 'border-white/5'
+                              <div className={`w-20 h-32 sm:w-24 sm:h-36 rounded-xl overflow-hidden flex-shrink-0 border transition-all ${
+                                isLeader ? 'border-twitch' : 'border-white/5'
                               }`}>
                                   <img src={game.imageUrl} alt={game.name} className="w-full h-full object-cover" />
                               </div>
                           ) : (
-                              <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-xl bg-neutral-900 flex items-center justify-center text-neutral-800 flex-shrink-0 border border-white/5">
+                              <div className="w-20 h-32 sm:w-24 sm:h-36 rounded-xl bg-neutral-900 flex items-center justify-center text-neutral-800 flex-shrink-0 border border-white/5">
                                   <Gavel className="w-10 h-10 opacity-20" />
                               </div>
                           )}
@@ -880,6 +934,53 @@ export default function App() {
 
         {/* Sidebar Right: History */}
         <aside className="w-full lg:w-64 flex-shrink-0 space-y-6 order-3">
+          {/* Timer Card */}
+          <div className="liquidglass rounded-2xl p-5 shadow-xl transition-all hover:border-white/20">
+            <div className="flex items-center gap-3 mb-4 border-b border-white/5 pb-3">
+              <Timer className="w-4 h-4 text-twitch" />
+              <div className="flex-1 flex items-center justify-between">
+                <h2 className="text-xs font-black uppercase tracking-[0.2em] text-neutral-400">Timer</h2>
+                <div className={`w-2 h-2 rounded-full ${isTimerRunning ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-5">
+              <div className="text-5xl font-black font-mono tracking-tighter text-white tabular-nums drop-shadow-[0_0_20px_rgba(145,70,255,0.15)]">
+                {formatTime(timerSeconds)}
+              </div>
+              
+              <div className="flex items-center gap-1 w-full p-1.5 bg-black/40 rounded-xl border border-white/5">
+                <input 
+                  type="text" 
+                  value={timerInput}
+                  onChange={(e) => setTimerInput(e.target.value)}
+                  placeholder="00:00"
+                  disabled={isTimerRunning}
+                  className="w-16 bg-transparent border-none px-2 py-1 text-center font-mono text-xs text-white focus:outline-none disabled:opacity-30 placeholder:text-neutral-700"
+                />
+                <div className="flex-1 h-px bg-white/5 mx-1" />
+                <div className="flex items-center gap-1">
+                  <button 
+                    onClick={handleStartTimer}
+                    title={isTimerRunning ? "Pausar" : "Iniciar"}
+                    className={`p-2 rounded-lg transition-all shadow-lg ${isTimerRunning 
+                      ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20' 
+                      : 'bg-twitch/10 text-twitch hover:bg-twitch/20'}`}
+                  >
+                    {isTimerRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                  </button>
+                  <button 
+                    onClick={handleResetTimer}
+                    title="Resetar"
+                    className="p-2 bg-white/5 text-neutral-500 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="liquidglass rounded-2xl p-5 shadow-xl transition-all hover:border-white/20">
             <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-3">
               <History className="w-4 h-4 text-emerald-500" />
@@ -893,7 +994,7 @@ export default function App() {
                 donations.map((donation) => (
                   <div key={donation.id} className="p-3 bg-black/20 rounded-xl border border-white/5 group relative overflow-hidden">
                     <div className="flex justify-between items-start mb-1">
-                      <span className="text-[10px] font-black text-[#9146FF] truncate max-w-[80px]">{donation.donatorName}</span>
+                      <span className="text-[10px] font-black text-twitch truncate max-w-[80px]">{donation.donatorName}</span>
                       <span className={`text-[10px] font-mono font-bold ${donation.amount < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
                         {donation.amount < 0 ? `-R$ ${Math.abs(donation.amount)}` : `+R$ ${donation.amount}`}
                       </span>
@@ -905,7 +1006,7 @@ export default function App() {
                             setEditingDonation(donation);
                             setIsEditDonationModalOpen(true);
                           }}
-                          className="p-1 px-2 hover:bg-[#9146FF]/10 rounded text-neutral-600 hover:text-[#9146FF] transition-all"
+                          className="p-1 px-2 hover:bg-twitch/10 rounded text-neutral-600 hover:text-twitch transition-all"
                           title="Editar lance"
                        >
                          <Pencil className="w-3 h-3" />
@@ -967,7 +1068,7 @@ function EditGameModal({
           className="liquidglass rounded-[2.5rem] p-6 sm:p-8 max-w-md w-full shadow-2xl transition-all border-white/10"
         >
         <div className="flex items-center gap-4 mb-6 sm:mb-8">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#9146FF]/10 flex items-center justify-center text-[#9146FF]">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-twitch/10 flex items-center justify-center text-twitch">
             <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
@@ -983,7 +1084,7 @@ function EditGameModal({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-black/40 border border-white/5 focus:border-[#9146FF]/30 rounded-2xl px-4 py-3 sm:py-3.5 text-sm text-white outline-none transition-all font-bold placeholder:text-neutral-700"
+              className="w-full bg-black/40 border border-white/5 focus:border-twitch/30 rounded-2xl px-4 py-3 sm:py-3.5 text-sm text-white outline-none transition-all font-bold placeholder:text-neutral-700"
             />
           </div>
 
@@ -994,7 +1095,7 @@ function EditGameModal({
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
               placeholder="Cole o link de uma imagem"
-              className="w-full bg-black/40 border border-white/5 focus:border-[#9146FF]/30 rounded-2xl px-4 py-3 sm:py-3.5 text-sm text-white outline-none transition-all font-medium placeholder:text-neutral-700"
+              className="w-full bg-black/40 border border-white/5 focus:border-twitch/30 rounded-2xl px-4 py-3 sm:py-3.5 text-sm text-white outline-none transition-all font-medium placeholder:text-neutral-700"
             />
             <p className="text-[8px] sm:text-[9px] text-neutral-600 font-medium ml-1">* Recomendamos links de imagens verticais.</p>
           </div>
@@ -1004,7 +1105,7 @@ function EditGameModal({
           <button
             onClick={() => onConfirm(game.id, name, imageUrl)}
             disabled={!name.trim()}
-            className="w-full py-3.5 sm:py-4 rounded-2xl bg-[#9146FF] hover:bg-[#a970ff] text-white font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all shadow-xl shadow-[#9146FF]/20 active:scale-95 disabled:opacity-50"
+            className="w-full py-3.5 sm:py-4 rounded-2xl bg-twitch hover:bg-twitch-dark text-white font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all shadow-xl shadow-twitch/20 active:scale-95 disabled:opacity-50"
           >
             Salvar Alterações
           </button>
@@ -1120,7 +1221,7 @@ function EditDonationModal({
                   onClick={() => setSelectedGameId(game.id)}
                   className={`group relative flex items-center gap-4 px-4 py-4 rounded-2xl text-left text-sm font-bold transition-all border ${
                     selectedGameId === game.id 
-                      ? 'bg-[#9146FF] border-[#9146FF] text-white shadow-lg shadow-[#9146FF]/20' 
+                      ? 'bg-twitch border-twitch text-white shadow-lg shadow-twitch/20' 
                       : 'bg-[#1f1f23] border-white/5 text-neutral-400 hover:border-white/10 hover:text-neutral-200'
                   }`}
                 >
@@ -1245,7 +1346,7 @@ function BidDonatorModal({
         className="liquidglass rounded-3xl p-6 max-w-sm w-full shadow-2xl border-white/10"
       >
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-[#9146FF]/20 flex items-center justify-center text-[#9146FF]">
+          <div className="w-10 h-10 rounded-xl bg-twitch/20 flex items-center justify-center text-twitch">
             <DollarSign className="w-5 h-5" />
           </div>
           <div>
@@ -1260,7 +1361,7 @@ function BidDonatorModal({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Digite o nome..."
-          className="w-full bg-black/40 border border-white/5 focus:border-[#9146FF]/30 rounded-xl px-4 py-2.5 sm:py-3 text-sm text-white outline-none transition-all font-bold placeholder:text-neutral-700 mb-4 sm:mb-6"
+          className="w-full bg-black/40 border border-white/5 focus:border-twitch/30 rounded-xl px-4 py-2.5 sm:py-3 text-sm text-white outline-none transition-all font-bold placeholder:text-neutral-700 mb-4 sm:mb-6"
           onKeyDown={(e) => {
             if (e.key === 'Enter') onConfirm(name);
           }}
@@ -1276,7 +1377,7 @@ function BidDonatorModal({
                   onClick={() => setName(d.name)}
                   className={`px-2.5 py-1 sm:px-3 sm:py-1.5 border rounded-lg text-[9px] sm:text-[10px] font-bold transition-all ${
                     name === d.name 
-                      ? 'bg-[#9146FF] border-[#9146FF] text-white' 
+                      ? 'bg-twitch border-twitch text-white' 
                       : 'bg-white/5 border-white/5 text-neutral-400 hover:border-white/10 hover:text-white'
                   }`}
                 >
@@ -1301,7 +1402,7 @@ function BidDonatorModal({
             </button>
             <button
               onClick={() => onConfirm(name)}
-              className="flex-[2] py-3 rounded-xl bg-[#9146FF] hover:bg-[#a970ff] text-white font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-[#9146FF]/20 active:scale-95"
+              className="flex-[2] py-3 rounded-xl bg-twitch hover:bg-twitch-dark text-white font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-twitch/20 active:scale-95"
             >
               Confirmar lance
             </button>
@@ -1338,7 +1439,7 @@ function StreamerSettingsModal({
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/twitch/user/${nickname.trim()}`);
+      const response = await fetch(`/api/public/user/${nickname.trim()}`);
       const data = await response.json();
       
       if (response.ok) {
@@ -1367,21 +1468,21 @@ function StreamerSettingsModal({
         className="liquidglass rounded-[2rem] p-6 sm:p-8 max-w-sm w-full shadow-2xl border-white/10"
       >
         <div className="flex items-center gap-4 mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-[#9146FF]/10 flex items-center justify-center text-[#9146FF]">
-            <Twitch className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-twitch/10 flex items-center justify-center text-twitch">
+            <Search className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Vincular Twitch</h2>
-            <p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest">Sincronize sua identidade</p>
+            <h2 className="text-xl font-bold text-white">Vincular Canal</h2>
+            <p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest">Acesse via API Pública (IVR)</p>
           </div>
         </div>
 
         <div className="space-y-6">
           {currentInfo && (
-            <div className="p-4 bg-[#9146FF]/5 border border-[#9146FF]/20 rounded-2xl flex items-center gap-4 mb-4">
-              <img src={currentInfo.profile_image_url} className="w-12 h-12 rounded-full border-2 border-[#9146FF]" />
+            <div className="p-4 bg-twitch/5 border border-twitch/20 rounded-2xl flex items-center gap-4 mb-4">
+              <img src={currentInfo.profile_image_url} className="w-12 h-12 rounded-full border-2 border-twitch" />
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black text-[#9146FF] uppercase tracking-widest">Canal Atual</p>
+                <p className="text-[10px] font-black text-twitch uppercase tracking-widest">Canal Atual</p>
                 <p className="text-sm font-bold text-white truncate">{currentInfo.display_name}</p>
               </div>
               <button 
@@ -1401,12 +1502,12 @@ function StreamerSettingsModal({
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder="Ex: alanzoka"
-                className="w-full bg-black/40 border border-white/5 focus:border-[#9146FF]/30 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-neutral-700"
+                className="w-full bg-black/40 border border-white/5 focus:border-twitch/30 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-neutral-700"
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               />
               {isLoading && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <Loader2 className="w-4 h-4 text-[#9146FF] animate-spin" />
+                  <Loader2 className="w-4 h-4 text-twitch animate-spin" />
                 </div>
               )}
             </div>
@@ -1417,7 +1518,7 @@ function StreamerSettingsModal({
             <button
               onClick={handleSearch}
               disabled={isLoading || !nickname.trim()}
-              className="w-full py-4 rounded-xl bg-[#9146FF] hover:bg-[#a970ff] text-white font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-[#9146FF]/20 disabled:opacity-20 translate-y-0 active:translate-y-1"
+              className="w-full py-4 rounded-xl bg-twitch hover:bg-twitch-dark text-white font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-twitch/20 disabled:opacity-20 translate-y-0 active:translate-y-1"
             >
               {isLoading ? "Buscando..." : "Sincronizar Canal"}
             </button>

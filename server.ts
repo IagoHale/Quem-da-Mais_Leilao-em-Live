@@ -10,32 +10,27 @@ async function startServer() {
 
   app.use(express.json());
 
-  // ROTA DA TWITCH: Busca dados do canal usando a IVR API (Mais leve e com banner correto)
-  app.get("/api/twitch/user/:login", async (req, res) => {
+  // ROTA PÚBLICA (IVR API): Busca dados do canal sem necessidade de tokens privados
+  app.get("/api/public/user/:login", async (req, res) => {
     const { login } = req.params;
 
     try {
-      // Tenta primeiro com query parameter, que é o padrão mais comum em APIs IVR
+      // IVR API v2 - Endpoint público para dados de usuário
       let response = await fetch(`https://api.ivr.fi/v2/twitch/user?login=${login.toLowerCase()}`);
       
-      // Se falhar, tenta como path parameter (caso tenha mudado)
       if (response.status === 404) {
         response = await fetch(`https://api.ivr.fi/v2/twitch/user/${login.toLowerCase()}`);
       }
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`IVR API error status: ${response.status}`, errorText);
         return res.status(response.status).json({ 
-          error: `Erro na API IVR: ${response.status}`,
+          error: `Erro na API: ${response.status}`,
           details: errorText
         });
       }
 
       const data = await response.json();
-      console.log(`IVR API Response for ${login}:`, JSON.stringify(data).substring(0, 200));
-
-      // IVR API pode retornar um array ou um único objeto dependendo da versão/usuário
       const user = Array.isArray(data) ? data[0] : data;
 
       if (user && (user.id || user.login || user.displayName)) {
@@ -44,20 +39,17 @@ async function startServer() {
           login: user.login || login,
           display_name: user.displayName || user.display_name || login,
           profile_image_url: user.logo || user.profile_image_url,
-          banner_url: user.banner, // A "capa" real do canal vindo da IVR
+          banner_url: user.banner,
+          primaryColorHex: user.chatColor || user.primaryColorHex,
           offline_image_url: user.offlineBanner || user.offline_image_url,
           description: user.bio || user.description
         });
       } else {
-        console.warn(`Dados de usuário não encontrados no JSON da IVR para: ${login}`, data);
-        res.status(404).json({ 
-          error: "Usuário não encontrado nos dados da IVR",
-          debug: data 
-        });
+        res.status(404).json({ error: "Canal não encontrado" });
       }
     } catch (error) {
-      console.error("IVR API Error:", error);
-      res.status(500).json({ error: "Erro ao comunicar com a API da Comunidade" });
+      console.error("Public API Error:", error);
+      res.status(500).json({ error: "Erro ao comunicar com a API Pública" });
     }
   });
 
