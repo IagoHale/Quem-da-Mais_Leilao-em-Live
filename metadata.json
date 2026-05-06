@@ -1,0 +1,6 @@
+{
+  "name": "Leilão de Jogos Live",
+  "description": "Gerenciador de leilão de jogos para streamers com ranking dinâmico em tempo real e tema inspirado na Twitch.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

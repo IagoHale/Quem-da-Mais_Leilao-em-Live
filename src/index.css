@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-twitch: #9146FF;
+  --color-twitch-dark: #772ce8;
+}
+
+@layer base {
+  body {
+    @apply bg-[#0e0e10] text-[#efeff1] selection:bg-[#9146FF]/30;
+  }
+}
