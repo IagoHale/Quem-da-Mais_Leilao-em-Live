@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
-import { Flag, Github } from 'lucide-react';
+import { Gavel, Github } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GameList } from './components/auction/GameList';
 import { useToast } from './components/feedback/ToastProvider';
@@ -403,7 +403,7 @@ export default function App() {
             boxShadow: '0 20px 70px rgba(0,0,0,0.35), 0 0 28px color-mix(in srgb, var(--color-twitch) 28%, transparent)',
           }}
         >
-          <Flag className="h-4 w-4" style={{ color: 'color-mix(in srgb, var(--color-twitch) 72%, white)' }} />
+          <Gavel className="h-4 w-4" style={{ color: 'color-mix(in srgb, var(--color-twitch) 72%, white)' }} />
           Encerrar leilão
         </button>
       </div>

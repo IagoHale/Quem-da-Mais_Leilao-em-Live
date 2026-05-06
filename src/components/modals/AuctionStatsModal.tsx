@@ -1,4 +1,4 @@
-import { Crown, Flame, Medal, Sparkles, X } from 'lucide-react';
+import { Crown, Flame, Ghost, Medal, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { calculateAuctionStats } from '../../lib/auction';
 import type { Donation, Donator, Game, StreamerInfo } from '../../types/auction';
@@ -19,15 +19,15 @@ export function AuctionStatsModal({
   const stats = calculateAuctionStats(games, donations, donators);
   const themedPanelStyle = {
     borderColor: 'color-mix(in srgb, var(--color-twitch) 32%, rgba(255,255,255,0.08))',
-    background: 'linear-gradient(180deg, color-mix(in srgb, var(--color-twitch) 18%, rgba(0,0,0,0.28)), rgba(0,0,0,0.22))',
   } as const;
   const themedSoftCardStyle = {
     borderColor: 'color-mix(in srgb, var(--color-twitch) 24%, rgba(255,255,255,0.08))',
-    background: 'linear-gradient(180deg, color-mix(in srgb, var(--color-twitch) 12%, rgba(255,255,255,0.04)), rgba(255,255,255,0.03))',
   } as const;
   const themedIconStyle = {
     color: 'color-mix(in srgb, var(--color-twitch) 78%, white)',
   } as const;
+  const valueClassName = 'font-mono font-black text-emerald-300';
+  const sabotageValueClassName = 'font-mono font-black text-rose-300';
 
   return (
     <motion.div
@@ -97,28 +97,34 @@ export function AuctionStatsModal({
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-[1.5rem] border p-4" style={themedPanelStyle}>
-              <Medal className="mb-4 h-5 w-5" style={themedIconStyle} />
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">Jogo vencedor</p>
+            <div className="liquidglass rounded-[1.35rem] border p-3.5" style={themedPanelStyle}>
+              <div className="flex items-center gap-2">
+                <Medal className="h-4 w-4 text-amber-300" />
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">Jogo vencedor</p>
+              </div>
               <p className="mt-2 text-lg font-black text-white">
                 {stats.topGames[0]?.name ?? 'Sem vencedor'}
               </p>
-              {stats.topGames[0] && <p className="mt-2 text-xs text-neutral-300">R$ {stats.topGames[0].value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>}
+              {stats.topGames[0] && <p className={`mt-2 text-xs ${valueClassName}`}>R$ {stats.topGames[0].value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>}
             </div>
-            <div className="rounded-[1.5rem] border p-4" style={themedPanelStyle}>
-              <Sparkles className="mb-4 h-5 w-5" style={themedIconStyle} />
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">Jogo mais sabotado</p>
+            <div className="liquidglass rounded-[1.35rem] border p-3.5" style={themedPanelStyle}>
+              <div className="flex items-center gap-2">
+                <Ghost className="h-4 w-4 text-rose-300" />
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">Jogo mais sabotado</p>
+              </div>
               <p className="mt-2 text-lg font-black text-white">{stats.mostSabotagedGame?.name ?? 'Sem sabotagem'}</p>
               {stats.mostSabotagedGame && stats.mostSabotagedGame.sabotageTotal > 0 && (
-                <p className="mt-2 text-xs text-neutral-300">R$ {stats.mostSabotagedGame.sabotageTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} derrubados</p>
+                <p className={`mt-2 text-xs ${valueClassName}`}>R$ {stats.mostSabotagedGame.sabotageTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} derrubados</p>
               )}
             </div>
-            <div className="rounded-[1.5rem] border p-4" style={themedPanelStyle}>
-              <Flame className="mb-4 h-5 w-5 text-rose-300" />
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">Maior lance</p>
+            <div className="liquidglass rounded-[1.35rem] border p-3.5" style={themedPanelStyle}>
+              <div className="flex items-center gap-2">
+                <Flame className="h-4 w-4 text-emerald-300" />
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">Maior lance</p>
+              </div>
               {stats.biggestBid ? (
                 <>
-                  <p className="mt-2 text-2xl font-black text-white">R$ {stats.biggestBid.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p className={`mt-2 text-2xl ${valueClassName}`}>R$ {stats.biggestBid.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                   <p className="mt-2 text-xs text-neutral-300">{stats.biggestBid.donatorName}</p>
                 </>
               ) : (
@@ -128,7 +134,7 @@ export function AuctionStatsModal({
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-[2rem] border p-5" style={themedPanelStyle}>
+            <div className="liquidglass rounded-[1.7rem] border p-4" style={themedPanelStyle}>
               <div className="mb-5 flex items-center gap-3">
                 <Crown className="h-5 w-5" style={themedIconStyle} />
                 <div>
@@ -142,7 +148,7 @@ export function AuctionStatsModal({
                   <p className="rounded-2xl border border-dashed border-white/10 py-8 text-center text-sm text-neutral-500">Nenhum lance registrado.</p>
                 ) : (
                   stats.topDonators.map((donator, index) => (
-                    <div key={donator.name} className="flex items-center justify-between rounded-2xl border px-4 py-3" style={themedSoftCardStyle}>
+                    <div key={donator.name} className="liquidglass flex items-center justify-between rounded-[1.15rem] border px-3.5 py-2.5" style={themedSoftCardStyle}>
                       <div className="flex items-center gap-3">
                         <div
                           className="flex h-9 w-9 items-center justify-center rounded-xl text-xs font-black text-white"
@@ -151,11 +157,10 @@ export function AuctionStatsModal({
                           {index + 1}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-white">{donator.name}</p>
-                          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-neutral-500">Arrematante</p>
+                          <p className="text-lg font-black text-white">{donator.name}</p>
                         </div>
                       </div>
-                      <p className="font-mono text-lg font-black" style={themedIconStyle}>R$ {donator.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                      <p className={valueClassName}>R$ {donator.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                     </div>
                   ))
                 )}
@@ -163,7 +168,7 @@ export function AuctionStatsModal({
             </div>
 
             <div className="space-y-6">
-              <div className="rounded-[2rem] border p-5" style={themedPanelStyle}>
+              <div className="liquidglass rounded-[1.7rem] border p-4" style={themedPanelStyle}>
                 <div className="mb-4 flex items-center gap-3">
                   <Medal className="h-5 w-5" style={themedIconStyle} />
                   <div>
@@ -172,36 +177,43 @@ export function AuctionStatsModal({
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {stats.topGames.length === 0 ? (
                     <p className="rounded-2xl border border-dashed border-white/10 py-6 text-center text-sm text-neutral-500">Sem jogos no leilão.</p>
                   ) : (
                     stats.topGames.map((game, index) => (
-                      <div key={game.id} className="rounded-2xl border px-4 py-3" style={themedSoftCardStyle}>
+                      <div key={game.id} className="liquidglass rounded-[1.15rem] border px-3.5 py-2" style={themedSoftCardStyle}>
                         <div className="flex items-center justify-between gap-3">
                           <p className="min-w-0 truncate text-sm font-bold text-white">
                             {index + 1}. {game.name}
                           </p>
-                          <p className="font-mono text-sm font-black" style={themedIconStyle}>R$ {game.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                          <p className={valueClassName}>R$ {game.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                         </div>
                       </div>
                     ))
                   )}
                 </div>
               </div>
-              <div className="rounded-[2rem] border p-5" style={themedPanelStyle}>
-                <h3 className="text-lg font-bold text-white">Maior sabotador</h3>
-                <div className="mt-4 rounded-2xl border p-4 text-sm text-neutral-300" style={themedSoftCardStyle}>
-                  <p className="mt-2 font-bold text-white">
-                    {stats.biggestSabotator
-                      ? `${stats.biggestSabotator.name} derrubou R$ ${stats.biggestSabotator.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} no total.`
-                      : 'Nenhuma sabotagem foi registrada nesta sessão.'}
-                  </p>
-                  {stats.biggestImposterBid && (
-                    <p className="mt-3 text-neutral-300">
-                      Maior golpe unico: {stats.biggestImposterBid.donatorName} tirou R$ {Math.abs(stats.biggestImposterBid.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em {stats.biggestImposterBid.gameName}.
+              <div className="liquidglass rounded-[1.7rem] border p-4" style={themedPanelStyle}>
+                <div className="flex items-center gap-3">
+                  <Ghost className="h-5 w-5" style={themedIconStyle} />
+                  <h3 className="text-lg font-bold text-white">Sabotadores</h3>
+                </div>
+                <div className="mt-4 grid gap-2">
+                  <div className="liquidglass rounded-[1.15rem] border p-2.5 text-sm text-neutral-300" style={themedSoftCardStyle}>
+                    <p className="font-bold text-white">
+                      {stats.biggestSabotator
+                        ? <>Maior sabotador: {stats.biggestSabotator.name} sabotou um total de <span className={sabotageValueClassName}>R$ {stats.biggestSabotator.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>.</>
+                        : 'Nenhuma sabotagem foi registrada nesta sessão.'}
                     </p>
-                  )}
+                  </div>
+                  <div className="liquidglass rounded-[1.15rem] border p-2.5 text-sm text-neutral-300" style={themedSoftCardStyle}>
+                    <p className="font-bold text-white">
+                      {stats.biggestImposterBid
+                        ? <>Maior golpe: {stats.biggestImposterBid.donatorName} sabotou <span className={sabotageValueClassName}>R$ {Math.abs(stats.biggestImposterBid.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span> em {stats.biggestImposterBid.gameName} de uma vez.</>
+                        : 'Nenhum golpe unico foi registrado nesta sessão.'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
