@@ -279,8 +279,8 @@ export default function App() {
               <Gamepad2 className="w-6 h-6 text-white" />
             </motion.div>
             <div>
-              <h1 className="text-xl font-display font-bold tracking-tight text-white uppercase sm:text-2xl">
-                LEILÃO <span className="text-[#9146FF]">LIVE</span>
+              <h1 className="text-xl font-display font-bold tracking-tight text-white uppercase sm:text-2xl flex flex-col sm:flex-row sm:items-baseline gap-1.5 sm:gap-3">
+                QUEM DA MAIS <span className="text-[#9146FF] text-[10px] sm:text-xs tracking-[0.2em] font-black opacity-80">- LEILÃO EM LIVE -</span>
               </h1>
             </div>
           </div>
