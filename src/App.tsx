@@ -24,6 +24,41 @@ type Donation = {
   timestamp: number;
 };
 
+const fetchTwitchUser = async (login: string) => {
+  // Busca direta da API IVR (Funciona em qualquer ambiente, inclusive Cloudflare/Vercel)
+  try {
+    let response = await fetch(`https://api.ivr.fi/v2/twitch/user?login=${login.toLowerCase()}`);
+    
+    // Se não encontrar via query param, tenta o path param (v2 suporta ambos dependendo do endpoint)
+    if (response.status === 404) {
+      response = await fetch(`https://api.ivr.fi/v2/twitch/user/${login.toLowerCase()}`);
+    }
+
+    if (!response.ok) throw new Error("Erro na API da Twitch");
+
+    const data = await response.json();
+    // A API IVR pode retornar um array ou um objeto único
+    const user = Array.isArray(data) ? data[0] : data;
+
+    if (user && (user.id || user.login || user.displayName)) {
+      return {
+        id: user.id || "0",
+        login: user.login || login,
+        display_name: user.displayName || user.display_name || login,
+        profile_image_url: user.logo || user.profile_image_url || user.profile_image,
+        banner_url: user.banner,
+        primaryColorHex: user.chatColor || user.primaryColorHex || "#9146FF",
+        offline_image_url: user.offlineBanner || user.offline_image_url,
+        description: user.bio || user.description
+      };
+    }
+    throw new Error("Canal não encontrado");
+  } catch (error) {
+    console.error("Twitch API Error:", error);
+    throw error;
+  }
+};
+
 export default function App() {
   const [games, setGames] = useState<Game[]>(() => {
     const saved = localStorage.getItem('auctionGames');
@@ -69,40 +104,6 @@ export default function App() {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const fetchTwitchUser = async (login: string) => {
-    // Busca direta da API IVR (Funciona em qualquer ambiente, inclusive Cloudflare/Vercel)
-    try {
-      let response = await fetch(`https://api.ivr.fi/v2/twitch/user?login=${login.toLowerCase()}`);
-      
-      // Se não encontrar via query param, tenta o path param (v2 suporta ambos dependendo do endpoint)
-      if (response.status === 404) {
-        response = await fetch(`https://api.ivr.fi/v2/twitch/user/${login.toLowerCase()}`);
-      }
-
-      if (!response.ok) throw new Error("Erro na API da Twitch");
-
-      const data = await response.json();
-      // A API IVR pode retornar um array ou um objeto único
-      const user = Array.isArray(data) ? data[0] : data;
-
-      if (user && (user.id || user.login || user.displayName)) {
-        return {
-          id: user.id || "0",
-          login: user.login || login,
-          display_name: user.displayName || user.display_name || login,
-          profile_image_url: user.logo || user.profile_image_url || user.profile_image,
-          banner_url: user.banner,
-          primaryColorHex: user.chatColor || user.primaryColorHex || "#9146FF",
-          offline_image_url: user.offlineBanner || user.offline_image_url,
-          description: user.bio || user.description
-        };
-      }
-      throw new Error("Canal não encontrado");
-    } catch (error) {
-      console.error("Twitch API Error:", error);
-      throw error;
-    }
-  };
   // Efeito para injetar a cor primária do streamer no CSS
   useEffect(() => {
     if (streamerInfo?.primaryColorHex) {

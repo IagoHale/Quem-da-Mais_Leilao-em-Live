@@ -14,8 +14,8 @@ let twitchAccessToken: string | null = null;
 let tokenExpiry: number = 0;
 
 async function getTwitchToken() {
-  const clientId = process.env.VITE_TWITCH_CLIENT_ID;
-  const clientSecret = process.env.VITE_TWITCH_CLIENT_SECRET;
+  const clientId = process.env.VITE_TWITCH_CLIENT_ID || process.env.TWITCH_CLIENT_ID;
+  const clientSecret = process.env.VITE_TWITCH_CLIENT_SECRET || process.env.TWITCH_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
     console.error("ERRO: VITE_TWITCH_CLIENT_ID ou VITE_TWITCH_CLIENT_SECRET não definidos no ambiente.");

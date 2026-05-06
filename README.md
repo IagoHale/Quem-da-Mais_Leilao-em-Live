@@ -39,12 +39,18 @@ Com uma estética moderna inspirada na Twitch, o app permite que o público infl
 ---
 
 ## ⚙️ Configuração (Variáveis de Ambiente)
-Para que a busca de jogos funcione, o projeto utiliza a API da IGDB. Você precisará de um Client ID e Client Secret da Twitch (obteníveis no [Twitch Dev Console](https://dev.twitch.tv/console)).
+Este projeto utiliza a API da IGDB via **Cloudflare Pages Functions**.
 
-Crie um arquivo `.env` na raiz do projeto com:
+### No Cloudflare Dashboard (Produção):
+Acesse **Settings > Environment Variables** no seu projeto Pages e adicione:
+*   `TWITCH_CLIENT_ID`: Seu Client ID da Twitch.
+*   `TWITCH_CLIENT_SECRET`: Seu Client Secret da Twitch.
+
+### No Ambiente Local:
+Crie um arquivo `.env` na raiz com o prefixo `VITE_`:
 ```env
-VITE_TWITCH_CLIENT_ID=seu_client_id
-VITE_TWITCH_CLIENT_SECRET=seu_client_secret
+VITE_TWITCH_CLIENT_ID=seu_id
+VITE_TWITCH_CLIENT_SECRET=sua_secret
 ```
 
 ---
