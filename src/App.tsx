@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Trophy, Plus, RotateCcw, Gavel, DollarSign, Target, TrendingUp, AlertTriangle, Search, Loader2, History, Pencil, Ghost, Github, Eye, EyeOff, Settings, Twitch, Timer, Play, Pause } from 'lucide-react';
+import { Trophy, Plus, RotateCcw, Gavel, DollarSign, Target, TrendingUp, AlertTriangle, Trash2, Search, Loader2, History, Pencil, Ghost, Github, Eye, EyeOff, Settings, Twitch, Timer, Play, Pause } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 type Game = {
@@ -88,8 +88,11 @@ export default function App() {
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const [isEditDonationModalOpen, setIsEditDonationModalOpen] = useState(false);
   const [isEditGameModalOpen, setIsEditGameModalOpen] = useState(false);
+  const [isRemoveGameModalOpen, setIsRemoveGameModalOpen] = useState(false);
+  const [gameToDelete, setGameToDelete] = useState<Game | null>(null);
   const [editingDonation, setEditingDonation] = useState<Donation | null>(null);
   const [editingGame, setEditingGame] = useState<Game | null>(null);
+  const [historyFilter, setHistoryFilter] = useState<string>('all');
   const [showTotal, setShowTotal] = useState(true);
   const [isStreamerModalOpen, setIsStreamerModalOpen] = useState(false);
   const [streamerInfo, setStreamerInfo] = useState<{
@@ -138,6 +141,28 @@ export default function App() {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleDeleteGame = (id: string) => {
+    const game = games.find(g => g.id === id);
+    if (!game) return;
+
+    // 1. Remove o jogo
+    setGames(prev => prev.filter(g => g.id !== id));
+    
+    // 2. Orfana os lances (ao invés de deletar)
+    const updatedDonations = donations.map(d => 
+      d.gameId === id 
+        ? { ...d, gameId: 'orphaned', gameName: '[Jogo Removido]' } 
+        : d
+    );
+    setDonations(updatedDonations);
+    
+    // 3. Atualiza os totais dos doadores (embora os lances continuem lá, o cálculo se mantém)
+    // O ranking de doadores na sidebar é global, não depende de o jogo existir
+    
+    setIsRemoveGameModalOpen(false);
+    setGameToDelete(null);
   };
 
   const handleStartTimer = () => {
@@ -479,6 +504,132 @@ export default function App() {
               <span className="text-twitch text-[8px] tracking-[0.2em] font-black opacity-60">LEILÃO EM LIVE</span>
             </h1>
           </div>
+
+          {/* BARRA DE BUSCA NO HEADER */}
+          <div ref={dropdownRef} className="flex-1 max-w-xl mx-4 relative group z-40">
+            <form 
+              onSubmit={(e) => { 
+                  e.preventDefault(); 
+              }} 
+              className="relative liquidglass rounded-xl p-1 flex items-center shadow-xl focus-within:ring-2 focus-within:ring-twitch/30 transition-all overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-white/5 pointer-events-none" />
+              <div className="relative z-10 flex items-center w-full">
+                <div className="pl-3 pr-2 text-neutral-500">
+                    {isSearching ? <Loader2 className="w-4 h-4 text-twitch animate-spin" /> : <Search className="w-4 h-4" />}
+                </div>
+                <input
+                  type="text"
+                  value={newGameName}
+                  onChange={(e) => {
+                    setNewGameName(e.target.value);
+                    setShowDropdown(true);
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  placeholder="Busque jogos ou adicione uma atividade..."
+                  className="flex-1 bg-transparent border-none text-xs px-1 py-1.5 focus:outline-none text-white placeholder:text-neutral-600 font-medium"
+                  maxLength={60}
+                  autoComplete="off"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleAddGame(newGameName)}
+                  disabled={!newGameName.trim()}
+                  className="bg-twitch hover:bg-twitch-dark text-white px-3 py-1.5 rounded-lg font-bold uppercase tracking-tighter transition-all text-[10px] disabled:opacity-20 flex items-center justify-center gap-2 group/btn relative overflow-hidden"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>Add</span>
+                </button>
+              </div>
+            </form>
+
+            {/* Dropdown de Resultados da Busca */}
+            <AnimatePresence>
+              {showDropdown && newGameName.trim().length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                    className="absolute top-full left-0 right-0 mt-3 bg-[#121214]/95 border border-white/20 rounded-2xl shadow-[0_40px_70px_-15px_rgba(0,0,0,0.9)] backdrop-blur-xl overflow-hidden z-[60]"
+                  >
+                      <div className="px-4 py-2 border-b border-white/10 bg-white/5 flex items-center justify-between min-h-[32px]">
+                        {isSearching ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="w-2.5 h-2.5 text-twitch animate-spin" />
+                            <span className="text-[9px] font-black text-twitch uppercase tracking-widest">Buscando na IGDB...</span>
+                          </div>
+                        ) : (
+                          <span className="text-[9px] font-black text-neutral-500 uppercase tracking-widest">
+                            {searchResults.length > 0 ? 'Resultados da Busca' : 'Resultados'}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="max-h-[400px] overflow-y-auto custom-scrollbar bg-black/5">
+                        {searchResults.length > 0 && searchResults.map((result) => (
+                            <button
+                                key={result.id}
+                                type="button"
+                                onClick={() => {
+                                    handleAddGame(result.name, result.thumb);
+                                }}
+                                className="w-full flex items-center justify-between p-2.5 hover:bg-white/5 transition-all text-left group/result border-b border-white/5 last:border-0"
+                            >
+                                <div className="flex items-center gap-5">
+                                    <div className="w-16 h-24 rounded-lg bg-black flex-shrink-0 border border-white/10 relative overflow-hidden shadow-xl group-hover/result:border-twitch/30 transition-colors">
+                                        {result.thumb ? (
+                                            <img 
+                                                src={result.thumb} 
+                                                className="w-full h-full object-cover" 
+                                                referrerPolicy="no-referrer"
+                                                alt={result.name}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                              <Ghost className="w-6 h-6 text-neutral-800" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <span className="block font-black text-[#efeff1] group-hover/result:text-twitch transition-colors truncate text-base leading-tight">
+                                          {result.name}
+                                      </span>
+                                      {result.year && (
+                                        <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-[0.15em] mt-1.5 block">{result.year}</span>
+                                      )}
+                                    </div>
+                                </div>
+                                <Plus className="w-4 h-4 text-neutral-600 group-hover/result:text-white transition-colors mr-2" />
+                            </button>
+                        ))}
+                      </div>
+
+                      {/* Opção Manual Fixa no fundo */}
+                      <button
+                          type="button"
+                          onClick={() => handleAddGame(newGameName)}
+                          className="w-full flex items-center justify-between p-3 bg-[#121214]/90 hover:bg-twitch/20 transition-all text-left group/manual border-t border-white/20"
+                      >
+                          <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-lg bg-twitch/10 flex items-center justify-center text-twitch/50 flex-shrink-0 group-hover/manual:bg-twitch/20 group-hover/manual:text-twitch transition-colors border border-twitch/20 shadow-inner">
+                                  <Plus className="w-5 h-5" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="block font-black text-[#efeff1] group-hover/manual:text-twitch transition-colors truncate text-sm">
+                                      Adicionar "{newGameName}"
+                                  </span>
+                                  <span className="text-[8px] font-black text-twitch uppercase tracking-widest bg-twitch/10 px-1.5 py-0.5 rounded ml-1">Manual</span>
+                                </div>
+                                <span className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest mt-0.5 block truncate max-w-[240px]">Nova atividade personalizada</span>
+                              </div>
+                          </div>
+                          <span className="text-[10px] font-black text-twitch uppercase opacity-0 group-hover/manual:opacity-100 transition-opacity mr-2">Criar</span>
+                      </button>
+                  </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
           
           {/* Lado Direito: Acumulado e Botões */}
           <div className="flex items-center justify-end gap-3 sm:gap-6">
@@ -751,121 +902,6 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* Barra de Busca Compacta */}
-        <div ref={dropdownRef} className="mb-4 relative group z-40 w-full">
-          <form 
-            onSubmit={(e) => { 
-                e.preventDefault(); 
-            }} 
-            className="relative liquidglass rounded-2xl p-1.5 flex items-center shadow-2xl focus-within:ring-2 focus-within:ring-twitch/30 transition-all overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-white/5 pointer-events-none" />
-            <div className="relative z-10 flex items-center w-full">
-              <div className="pl-4 pr-2 text-neutral-500">
-                  {isSearching ? <Loader2 className="w-5 h-5 text-twitch animate-spin" /> : <Search className="w-5 h-5" />}
-              </div>
-              <input
-                type="text"
-                value={newGameName}
-                onChange={(e) => {
-                  setNewGameName(e.target.value);
-                  setShowDropdown(true);
-                }}
-                onFocus={() => setShowDropdown(true)}
-                placeholder="Busque jogos ou adicione uma atividade personalizada"
-                className="flex-1 bg-transparent border-none text-sm px-1 py-2 focus:outline-none text-white placeholder:text-neutral-600 font-medium"
-                maxLength={60}
-                autoComplete="off"
-              />
-              <button
-                type="button"
-                onClick={() => handleAddGame(newGameName)}
-                disabled={!newGameName.trim()}
-                className="bg-twitch hover:bg-twitch-dark text-white px-4 py-2.5 rounded-xl font-bold uppercase tracking-tighter transition-all text-xs disabled:opacity-20 flex items-center justify-center gap-2 group/btn relative overflow-hidden"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add</span>
-              </button>
-            </div>
-          </form>
-
-          {/* Dropdown de Resultados da Busca */}
-          <AnimatePresence>
-            {showDropdown && newGameName.trim().length >= 2 && (
-                <motion.div
-                   initial={{ opacity: 0, y: -20, scale: 0.98 }}
-                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                   exit={{ opacity: 0, y: -20, scale: 0.98 }}
-                   className="absolute top-full left-0 right-0 mt-4 liquidglass rounded-3xl shadow-[0_40px_70px_-15px_rgba(0,0,0,0.8)] overflow-hidden z-[60]"
-                >
-                    <div className="px-5 py-3 border-b border-white/5 bg-white/5 flex items-center justify-between">
-                      <span className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Banco de Dados (PC)</span>
-                      {isSearching && <Loader2 className="w-3 h-3 text-twitch animate-spin" />}
-                    </div>
-
-                    <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
-                        {searchResults.length > 0 && searchResults.map((result) => (
-                            <button
-                                key={result.id}
-                                type="button"
-                                onClick={() => {
-                                    handleAddGame(result.name, result.thumb);
-                                }}
-                                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-all text-left group"
-                            >
-                                <div className="flex items-center gap-5">
-                                    <div className="w-10 h-14 rounded-lg overflow-hidden bg-black flex-shrink-0 border border-white/10 relative">
-                                        {result.thumb ? (
-                                            <img 
-                                                src={result.thumb} 
-                                                className="w-full h-full object-cover" 
-                                                referrerPolicy="no-referrer"
-                                                alt={result.name}
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                              <Ghost className="w-4 h-4 text-neutral-800" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="min-w-0">
-                                      <span className="block font-bold text-[#efeff1] group-hover:text-twitch transition-colors truncate text-sm">
-                                          {result.name}
-                                      </span>
-                                      {result.year && (
-                                        <span className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest mt-0.5 block">{result.year}</span>
-                                      )}
-                                    </div>
-                                </div>
-                                <Plus className="w-4 h-4 text-neutral-600 group-hover:text-white" />
-                            </button>
-                        ))}
-
-                        {/* Opção Manual sempre presente se houver texto */}
-                        <button
-                            type="button"
-                            onClick={() => handleAddGame(newGameName)}
-                            className={`w-full flex items-center justify-between p-4 hover:bg-twitch/10 transition-all text-left group ${searchResults.length > 0 ? 'border-t border-white/5' : ''}`}
-                        >
-                            <div className="flex items-center gap-5">
-                                <div className="w-10 h-14 rounded-lg bg-twitch/10 flex items-center justify-center text-twitch/50 flex-shrink-0 group-hover:bg-twitch/20 group-hover:text-twitch transition-colors border border-twitch/20">
-                                    <Plus className="w-5 h-5" />
-                                </div>
-                                <div>
-                                  <span className="block font-bold text-[#efeff1] group-hover:text-twitch transition-colors truncate text-sm">
-                                      Adicionar "{newGameName}" manualmente
-                                  </span>
-                                  <span className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest mt-0.5 block">Para "Só na conversa" ou atividades personalizadas</span>
-                                </div>
-                            </div>
-                            <span className="text-[9px] font-black text-twitch uppercase opacity-0 group-hover:opacity-100 transition-opacity">Add Manual</span>
-                        </button>
-                    </div>
-                </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
         {/* Lista de Jogos (Ranking) */}
         <div className="flex flex-col gap-4 min-h-[600px] w-full flex-grow transition-all duration-500">
           {games.length === 0 ? (
@@ -922,6 +958,29 @@ export default function App() {
                         )}
 
                         <div className="relative z-10 p-3 sm:p-3.5 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
+                          {/* Botões de Ação de Gestão (Topo Direito) */}
+                          <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-30">
+                              <button
+                                onClick={() => {
+                                  setEditingGame(game);
+                                  setIsEditGameModalOpen(true);
+                                }}
+                                className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg text-neutral-500 hover:text-white transition-all bg-black/20 backdrop-blur-sm"
+                                title="Editar jogo"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setGameToDelete(game);
+                                  setIsRemoveGameModalOpen(true);
+                                }}
+                                className="w-8 h-8 flex items-center justify-center hover:bg-red-500/20 rounded-lg text-neutral-500 hover:text-red-500 transition-all bg-black/20 backdrop-blur-sm"
+                                title="Remover jogo"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                          </div>
                           
                           {/* Rank Badge */}
                           <div className={`absolute -left-1 top-4 flex items-center justify-center w-8 h-8 rounded-lg font-mono font-black text-[10px] z-20 shadow-lg border border-white/10 rotate-[-12deg] ${
@@ -952,16 +1011,6 @@ export default function App() {
                               <h3 className={`text-lg sm:text-xl font-bold truncate tracking-tight ${isLeader ? 'text-white' : 'text-neutral-200'}`}>
                                 {game.name}
                               </h3>
-                              <button
-                                onClick={() => {
-                                  setEditingGame(game);
-                                  setIsEditGameModalOpen(true);
-                                }}
-                                className="p-1.5 hover:bg-white/5 rounded text-neutral-600 hover:text-white transition-all"
-                                title="Editar jogo"
-                              >
-                                <Pencil className="w-3 h-3" />
-                              </button>
                               {index === 0 && game.value > 0 && (
                                 <Trophy className="w-4 h-4 text-yellow-400" />
                               )}
@@ -988,12 +1037,12 @@ export default function App() {
                         {/* Botões de Ação Simplificados */}
                         <div className="flex gap-3 sm:gap-4 w-full md:w-auto">
                           <div className="flex flex-col gap-1 sm:gap-1.5 flex-1 md:flex-none min-w-0">
-                            <label className="text-[7px] sm:text-[8px] font-black uppercase text-emerald-500/60 tracking-wider pl-1 truncate">Lance Normal</label>
+                            <label className="text-[8px] sm:text-[10px] font-black uppercase text-emerald-500/60 tracking-widest pl-1 truncate">Lance Normal</label>
                             <CustomBidInput onBid={(amount) => addBid(game.id, amount)} />
                           </div>
-
+ 
                           <div className="flex flex-col gap-1 sm:gap-1.5 flex-1 md:flex-none min-w-0">
-                            <label className="text-[7px] sm:text-[8px] font-black uppercase text-red-500/60 tracking-wider pl-1 truncate">Lance Impostor</label>
+                            <label className="text-[8px] sm:text-[10px] font-black uppercase text-red-500/60 tracking-widest pl-1 truncate">Lance Impostor</label>
                             <ImposterBidInput onBid={(amount) => addBid(game.id, amount)} />
                           </div>
                         </div>
@@ -1060,13 +1109,51 @@ export default function App() {
               <History className="w-4 h-4 text-emerald-500" />
               <h2 className="text-xs font-black uppercase tracking-[0.2em] text-neutral-400">Histórico</h2>
             </div>
+
+            {/* Filtro de Jogo */}
+            <div className="mb-4 relative group">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                <Search className="w-3 h-3 text-neutral-600 group-focus-within:text-twitch transition-colors" />
+              </div>
+              <select 
+                value={historyFilter}
+                onChange={(e) => setHistoryFilter(e.target.value)}
+                className="w-full bg-black/40 border border-white/5 rounded-xl pl-9 pr-8 py-2.5 text-[9px] font-black uppercase tracking-widest text-[#efeff1] outline-none focus:border-twitch/30 transition-all appearance-none cursor-pointer"
+              >
+                <option value="all">Filtro: Todos</option>
+                {donations.some(d => d.gameId === 'orphaned') && (
+                  <option value="orphaned" className="text-red-500">⚠ Lances Órfãos</option>
+                )}
+                {games.map(g => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none opacity-40">
+                 <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-white" />
+              </div>
+            </div>
             
             <div className="space-y-3 max-h-[300px] lg:max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-              {donations.length === 0 ? (
-                <p className="text-[10px] text-neutral-600 font-bold uppercase text-center py-4">Nenhum lance</p>
-              ) : (
-                donations.map((donation) => (
-                  <div key={donation.id} className="p-3 bg-black/20 rounded-xl border border-white/5 group relative overflow-hidden">
+              {(() => {
+                const filteredDonations = donations.filter(d => 
+                   historyFilter === 'all' ? true : d.gameId === historyFilter
+                );
+                
+                if (filteredDonations.length === 0) {
+                  return <p className="text-[10px] text-neutral-600 font-bold uppercase text-center py-4">Nenhum lance encontrado</p>;
+                }
+
+                return filteredDonations.map((donation) => (
+                  <div key={donation.id} className={`p-3 rounded-xl border group relative overflow-hidden transition-all ${
+                     donation.gameId === 'orphaned' 
+                       ? 'bg-red-500/5 border-red-500/20 hover:border-red-500/40' 
+                       : 'bg-black/20 border-white/5 hover:border-white/20'
+                  }`}>
+                    {donation.gameId === 'orphaned' && (
+                      <div className="absolute top-0 right-0 p-1">
+                        <AlertTriangle className="w-2.5 h-2.5 text-red-500 animate-pulse" />
+                      </div>
+                    )}
                     <div className="flex justify-between items-start mb-1">
                       <span className="text-[10px] font-black text-twitch truncate max-w-[80px]">{donation.donatorName}</span>
                       <span className={`text-[10px] font-mono font-bold ${donation.amount < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
@@ -1074,27 +1161,43 @@ export default function App() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
-                       <p className="text-[9px] text-neutral-500 font-bold truncate leading-tight">➔ {donation.gameName}</p>
+                       <p className={`text-[9px] font-bold truncate leading-tight ${donation.gameId === 'orphaned' ? 'text-red-400' : 'text-neutral-500'}`}>
+                         ➔ {donation.gameName}
+                       </p>
                        <button 
                           onClick={() => {
                             setEditingDonation(donation);
                             setIsEditDonationModalOpen(true);
                           }}
-                          className="p-1 px-2 hover:bg-twitch/10 rounded text-neutral-600 hover:text-twitch transition-all"
+                          className={`p-1 px-2 rounded transition-all ${
+                            donation.gameId === 'orphaned'
+                              ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                              : 'hover:bg-twitch/10 text-neutral-600 hover:text-twitch'
+                          }`}
                           title="Editar lance"
                        >
                          <Pencil className="w-3 h-3" />
                        </button>
                     </div>
                   </div>
-                ))
-              )}
+                ));
+              })()}
             </div>
           </div>
         </aside>
+        {isRemoveGameModalOpen && gameToDelete && (
+          <RemoveGameModal 
+            game={gameToDelete}
+            onConfirm={() => handleDeleteGame(gameToDelete.id)}
+            onCancel={() => {
+              setIsRemoveGameModalOpen(false);
+              setGameToDelete(null);
+            }}
+          />
+        )}
       </div>
 
-      {/* Spacer para o footer fixo para que o conteúdo não fique escondido sob ele */}
+      {/* Spacer para o footer fixo */}
       <div className="h-16 flex-shrink-0" />
 
       <footer className="fixed bottom-0 left-0 right-0 py-2 border-t border-white/5 bg-transparent backdrop-blur-md flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 z-[100] opacity-50 hover:opacity-100 transition-opacity">
@@ -1261,13 +1364,14 @@ function EditDonationModal({
 
               <div className="pt-4 sm:pt-6 border-t border-white/5">
                 <button
+                   disabled={selectedGameId === 'orphaned'}
                   onClick={() => {
                     const parsedAmount = parseFloat(amount.replace(',', '.'));
                     if (!isNaN(parsedAmount)) {
                       onConfirm(donation.id, donation.donatorName, parsedAmount, selectedGameId);
                     }
                   }}
-                  className="w-full py-3 sm:py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all shadow-xl shadow-emerald-500/20 active:scale-95"
+                  className="w-full py-3 sm:py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-30 disabled:cursor-not-allowed text-black font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all shadow-xl shadow-emerald-500/20 active:scale-95"
                 >
                   Confirmar Alterações
                 </button>
@@ -1284,12 +1388,23 @@ function EditDonationModal({
           {/* Coluna Direita: Seleção de Destino */}
           <div className="flex-1 p-6 sm:p-8 md:p-10 bg-black/20">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
-               <label className="text-[9px] sm:text-[10px] font-black text-neutral-500 uppercase tracking-widest">Alterar Destino</label>
+               <div className="flex flex-col">
+                 <label className="text-[9px] sm:text-[10px] font-black text-neutral-500 uppercase tracking-widest">Alterar Destino</label>
+                 {donation.gameId === 'orphaned' && (
+                   <span className="text-[8px] font-bold text-red-500 uppercase tracking-tighter">⚠ Lance sem jogo vinculado</span>
+                 )}
+               </div>
                <span className="text-[9px] sm:text-[10px] font-mono text-neutral-600 font-bold">{games.length} opções</span>
             </div>
             
-            <div className="grid gap-2 sm:gap-2.5 max-h-[300px] md:max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
-              {games.map(game => (
+            {games.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-10 bg-black/40 rounded-3xl border border-dashed border-white/5">
+                <Ghost className="w-8 h-8 text-neutral-800 mb-2" />
+                <p className="text-[10px] text-neutral-600 font-black uppercase text-center">Nenhum jogo ativo para vincular</p>
+              </div>
+            ) : (
+              <div className="grid gap-2 sm:gap-2.5 max-h-[300px] md:max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
+                {games.map(game => (
                 <button
                   key={game.id}
                   onClick={() => setSelectedGameId(game.id)}
@@ -1313,11 +1428,12 @@ function EditDonationModal({
                 </button>
               ))}
             </div>
-          </div>
+          )}
         </div>
-      </motion.div>
+      </div>
     </motion.div>
-  );
+  </motion.div>
+);
 }
 
 function CustomBidInput({ onBid }: { onBid: (amount: number) => void }) {
@@ -1340,7 +1456,7 @@ function CustomBidInput({ onBid }: { onBid: (amount: number) => void }) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="VALOR +"
-        className="w-full bg-emerald-500/5 border border-white/5 focus:border-emerald-500/30 rounded-xl pl-2.5 sm:pl-3 pr-8 sm:pr-10 py-1.5 sm:py-2 text-[10px] sm:text-xs text-emerald-400 outline-none transition-all font-bold placeholder:text-neutral-700 placeholder:text-[8px] sm:placeholder:text-[9px]"
+        className="w-full bg-emerald-500/5 border border-emerald-500/10 focus:border-emerald-500/40 rounded-xl pl-3 sm:pl-4 pr-10 sm:pr-12 py-2.5 sm:py-3 text-sm sm:text-base text-emerald-400 outline-none transition-all font-black placeholder:text-emerald-900/40 placeholder:text-[9px] sm:placeholder:text-[10px]"
         onKeyDown={(e) => {
           if (e.key === 'Enter') handleAction();
         }}
@@ -1377,7 +1493,7 @@ function ImposterBidInput({ onBid }: { onBid: (amount: number) => void }) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="VALOR -"
-        className="w-full bg-red-500/5 border border-red-500/10 focus:border-red-500/30 rounded-xl pl-2.5 sm:pl-3 pr-8 sm:pr-10 py-1.5 sm:py-2 text-[10px] sm:text-xs text-red-500 outline-none transition-all font-bold placeholder:text-red-900/40 placeholder:text-[8px] sm:placeholder:text-[9px]"
+        className="w-full bg-red-500/5 border border-red-500/10 focus:border-red-500/40 rounded-xl pl-3 sm:pl-4 pr-10 sm:pr-12 py-2.5 sm:py-3 text-sm sm:text-base text-red-500 outline-none transition-all font-black placeholder:text-red-900/40 placeholder:text-[9px] sm:placeholder:text-[10px]"
         onKeyDown={(e) => {
           if (e.key === 'Enter') handleAction();
         }}
@@ -1485,6 +1601,63 @@ function BidDonatorModal({
           <button
             onClick={onCancel}
             className="w-full py-2 text-[10px] font-bold text-neutral-600 hover:text-neutral-400 transition-colors uppercase tracking-widest"
+          >
+            Cancelar
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function RemoveGameModal({ 
+  game, 
+  onConfirm, 
+  onCancel 
+}: { 
+  game: Game, 
+  onConfirm: () => void,
+  onCancel: () => void 
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl"
+    >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          className="liquidglass rounded-[2rem] p-6 sm:p-8 max-w-sm w-full shadow-2xl transition-all border-red-500/20"
+        >
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white">Remover Jogo?</h2>
+            <p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest">Esta ação é irreversível</p>
+          </div>
+        </div>
+
+        <div className="p-4 bg-white/5 rounded-2xl mb-6">
+          <p className="text-sm text-neutral-300 leading-relaxed">
+            Ao remover <span className="text-white font-bold">"{game.name}"</span>, todos os <span className="text-red-400 font-bold">R$ {game.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span> acumulados em lances serão perdidos permanentemente.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={onConfirm}
+            className="w-full py-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-red-500/20 active:scale-95"
+          >
+            Sim, remover e apagar lances
+          </button>
+          <button
+            onClick={onCancel}
+            className="w-full py-2 text-[10px] font-bold text-neutral-600 hover:text-white transition-colors uppercase tracking-widest"
           >
             Cancelar
           </button>
