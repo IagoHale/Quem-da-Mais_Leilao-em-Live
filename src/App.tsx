@@ -261,7 +261,7 @@ export default function App() {
   };
 
   const sortedGames = [...games].sort((a, b) => b.value - a.value);
-  const totalRaised = games.reduce((acc, game) => acc + game.value, 0);
+  const totalRaised = donations.reduce((acc, d) => acc + Math.abs(d.amount), 0);
   const leadingGameId = sortedGames.length > 0 ? sortedGames[0].id : null;
 
   // Sort donators by total descending
@@ -288,7 +288,7 @@ export default function App() {
           <div className="flex items-center gap-4 sm:gap-8 bg-black/40 px-4 sm:px-8 py-2.5 rounded-2xl border border-white/5 ring-1 ring-white/5">
             <div className="flex flex-col items-center">
               <span className="text-[9px] text-neutral-500 uppercase tracking-widest font-black mb-1">Acumulado</span>
-              <div className={`flex items-baseline gap-1 ${totalRaised < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+              <div className="flex items-baseline gap-1 text-emerald-400">
                 <span className="text-[10px] font-black opacity-60">R$</span>
                 <span className="text-2xl font-mono font-bold leading-none tracking-tighter">
                   {totalRaised.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
