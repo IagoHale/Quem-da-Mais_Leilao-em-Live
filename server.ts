@@ -57,8 +57,8 @@ app.get("/api/games/search", async (req, res) => {
     // Busca na IGDB: Nome, Capa e Data de lançamento
     const query = `
       search "${q}";
-      fields name, cover.url, first_release_date, platforms.name;
-      limit 10;
+      fields name, cover.url, first_release_date;
+      limit 5;
     `;
 
     const response = await fetch("https://api.igdb.com/v4/games", {

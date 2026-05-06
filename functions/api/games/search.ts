@@ -29,8 +29,7 @@ export async function onRequest(context) {
     const token = tokenData.access_token;
 
     // 2. Buscar na IGDB
-    // Nota: IGDB não aceita aspas duplas diretas em alguns casos de busca, usamos aspas simples ou sanitização
-    const query = `search "${q.replace(/"/g, '')}"; fields name, cover.url, first_release_date; limit 10;`;
+    const query = `search "${q.replace(/"/g, '')}"; fields name, cover.url, first_release_date; limit 5;`;
 
     const igdbResponse = await fetch("https://api.igdb.com/v4/games", {
       method: "POST",

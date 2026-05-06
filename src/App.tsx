@@ -756,13 +756,6 @@ export default function App() {
           <form 
             onSubmit={(e) => { 
                 e.preventDefault(); 
-                const firstResult = searchResults.length > 0 ? searchResults[0] : null;
-                let finalThumbnail = undefined;
-                
-                if (firstResult && firstResult.name.toLowerCase().includes(newGameName.toLowerCase())) {
-                    finalThumbnail = firstResult.thumb;
-                }
-                handleAddGame(newGameName, finalThumbnail); 
             }} 
             className="relative liquidglass rounded-2xl p-1.5 flex items-center shadow-2xl focus-within:ring-2 focus-within:ring-twitch/30 transition-all overflow-hidden"
           >
@@ -785,7 +778,8 @@ export default function App() {
                 autoComplete="off"
               />
               <button
-                type="submit"
+                type="button"
+                onClick={() => handleAddGame(newGameName)}
                 disabled={!newGameName.trim()}
                 className="bg-twitch hover:bg-twitch-dark text-white px-4 py-2.5 rounded-xl font-bold uppercase tracking-tighter transition-all text-xs disabled:opacity-20 flex items-center justify-center gap-2 group/btn relative overflow-hidden"
               >
@@ -809,7 +803,7 @@ export default function App() {
                       {isSearching && <Loader2 className="w-3 h-3 text-twitch animate-spin" />}
                     </div>
 
-                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                    <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
                         {searchResults.length > 0 && searchResults.map((result) => (
                             <button
                                 key={result.id}
@@ -851,17 +845,17 @@ export default function App() {
                         <button
                             type="button"
                             onClick={() => handleAddGame(newGameName)}
-                            className={`w-full flex items-center justify-between p-4 hover:bg-[#9146FF]/20 transition-all text-left group ${searchResults.length > 0 ? 'border-t border-white/5' : ''}`}
+                            className={`w-full flex items-center justify-between p-4 hover:bg-twitch/10 transition-all text-left group ${searchResults.length > 0 ? 'border-t border-white/5' : ''}`}
                         >
                             <div className="flex items-center gap-5">
-                                <div className="w-10 h-14 rounded-lg bg-white/5 flex items-center justify-center text-neutral-600 flex-shrink-0 group-hover:bg-twitch/30 group-hover:text-white transition-colors">
+                                <div className="w-10 h-14 rounded-lg bg-twitch/10 flex items-center justify-center text-twitch/50 flex-shrink-0 group-hover:bg-twitch/20 group-hover:text-twitch transition-colors border border-twitch/20">
                                     <Plus className="w-5 h-5" />
                                 </div>
                                 <div>
-                                  <span className="block font-bold text-[#efeff1] group-hover:text-[#9146FF] transition-colors truncate text-sm">
+                                  <span className="block font-bold text-[#efeff1] group-hover:text-twitch transition-colors truncate text-sm">
                                       Adicionar "{newGameName}" manualmente
                                   </span>
-                                  <span className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest mt-0.5 block">Para consoles ou atividades customizadas</span>
+                                  <span className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest mt-0.5 block">Para "Só na conversa" ou atividades personalizadas</span>
                                 </div>
                             </div>
                             <span className="text-[9px] font-black text-twitch uppercase opacity-0 group-hover:opacity-100 transition-opacity">Add Manual</span>
