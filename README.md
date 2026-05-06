@@ -1,27 +1,27 @@
-# QUEM DA MAIS - Leilão em Live 🔨💜
+# QUEM DA MAIS - Leilão em Live
 [quemdamais.pages.dev](https://quemdamais.pages.dev/)
 
 O **QUEM DA MAIS** é um sistema de LEILÃO para streamers, projetado para criadores de conteúdo que desejam engajar sua audiência através votações financeiras, permitindo que o público influencie diretamente o conteúdo da live através de lances.
 
 ## 🔒 Privacidade e Dados
-*   **Sem Integrações Externas:** O Sistema depende de uma pessoa adicioando os lances manualmente. não há conexão com serviços de terceiros para processar lances.
-*   **Sem Login:** Não é necessário criar conta ou realizar login. Nenhum dado pessoal é solicitado ou armazenado.
-*   **Armazenamento Local:** Nenhum dado é salvo em bancos de dados externos. Toda a sessão do leilão é salva exclusivamente no **cache local (LocalStorage)** do seu navegador. Se você limpar os dados do navegador ou trocar de computador, os dados serão perdidos.
+*   **Sem Integrações Externas:** O Sistema depende de uma pessoa adicionando os lances manualmente. não há conexão com serviços de terceiros para processar lances.
+*   **Sem Login:** Não é necessário criar conta ou realizar login.
+*   **Armazenamento Local:** Nenhum dado é salvo em bancos de dados externos. Toda a sessão do leilão é salva no **cache local (LocalStorage)** do navegador.
 
 ## 🚀 Principais Funcionalidades
 
-### 1. Sistema de Lances e Lances Impotores
-*   **Lance Normal (+):** Aumenta o valor acumulado de um jogo ou atividade, ajudando-o a subir no ranking.
-*   **Lance Impostor (-):** Uma mecânica de "troll" onde o lance diminui o valor de um jogo específico.
+### 1. Sistema de Lances e Lances Impostores
+*   **Lance Normal (+):** Adiciona valor em um jogo/atividade, ajudando-o a subir no ranking.
+*   **Lance Impostor (-):** Uma mecânica "troll" onde o lance diminui o valor de um jogo/atividade.
 
 ### 2. Gestão Dinâmica de Jogos/Atividades
 *   **Busca de Jogos:** Pesquisa rápida com capas oficiais.
-*   **Adição Manual:** Suporte para atividades personalizadas (ex: "Assistir Filme", "Live de IRL", etc).
+*   **Atividades personalizadas:** Suporte para Adição Manual de atividades personalizadas (ex: "Assistir Filme", "Live de IRL", etc).
 
 ### 3. Painel de Auditoria e Controle
-*   **Histórico de Lances:** Lista completa de todas as movimentações com filtros por jogo.
+*   **Histórico de Lances:** Lista completa de todas as movimentações com filtros por jogo/atividade.
 *   **Edição de Lances:** Corrija valores ou mude o destino de um lance.
-*   **Ranking de Doadores:** Destaque para os maiores apoiadores da sessão do leilão.
+*   **Ranking de Arrematantes:** Lista de arrematantes com destaque para os maiores apoiadores da sessão do leilão.
 *   **Design reativo:** O site da match com a estética do seu canal na twitch (sem necessidade de login).
 
 ## 🛠️ Tecnologias Utilizadas
