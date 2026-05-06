@@ -37,16 +37,16 @@ export function AppHeader({
   return (
     <header className="sticky top-0 z-50 liquidglass shadow-none relative backdrop-blur-3xl !border-none border-0">
       <div className="w-full max-w-[1500px] mx-auto px-4 py-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-h-[72px]">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center sm:justify-start gap-3 w-full sm:w-auto">
           <motion.div
             whileHover={{ rotate: 10, scale: 1.1 }}
             className="bg-twitch p-2 rounded-xl shadow-[0_0_20px_var(--color-twitch)] flex-shrink-0"
           >
             <Gavel className="w-5 h-5 text-white" />
           </motion.div>
-          <h1 className="text-lg font-display font-bold tracking-tight text-white uppercase flex flex-col leading-none">
+          <h1 className="text-xl font-display font-bold tracking-tight text-white uppercase flex flex-col items-center text-center leading-none">
             QUEM DA MAIS
-            <span className="text-twitch text-[8px] tracking-[0.2em] font-black opacity-60">LEILÃO EM LIVE</span>
+            <span className="text-twitch text-[10px] tracking-[0.2em] font-black opacity-60">LEILÃO EM LIVE</span>
           </h1>
         </div>
 
@@ -170,7 +170,7 @@ export function AppHeader({
         </div>
 
         <div className="flex items-center justify-end gap-3 sm:gap-6">
-          <div className="flex items-center gap-3 bg-black/40 px-3 sm:px-4 py-1.5 rounded-2xl border border-white/5 ring-1 ring-white/5">
+          <div className="hidden sm:flex items-center gap-3 bg-black/40 px-3 sm:px-4 py-1.5 rounded-2xl border border-white/5 ring-1 ring-white/5">
             <button
               onClick={() => setShowTotal(!showTotal)}
               className="text-neutral-600 hover:text-white transition-all p-1"

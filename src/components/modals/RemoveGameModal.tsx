@@ -16,14 +16,20 @@ export function RemoveGameModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 p-4 backdrop-blur-xl"
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="liquidglass rounded-[2rem] p-6 sm:p-8 max-w-sm w-full shadow-2xl transition-all border-red-500/20"
+        className="liquidglass relative w-full max-w-sm overflow-hidden rounded-[2rem] border border-white/10 p-6 shadow-[0_40px_120px_rgba(0,0,0,0.55)] sm:p-8"
       >
+        <div 
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: 'radial-gradient(circle at top left, color-mix(in srgb, var(--color-twitch) 18%, transparent), transparent 40%), radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-twitch) 10%, transparent), transparent 40%)'
+          }}
+        />
         <div className="flex items-center gap-4 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500">
             <AlertTriangle className="w-6 h-6" />

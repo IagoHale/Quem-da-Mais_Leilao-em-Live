@@ -22,14 +22,20 @@ export function EditDonationModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[150] flex items-center justify-center p-2 sm:p-4 bg-black/95 backdrop-blur-2xl"
+      className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 p-2 backdrop-blur-xl sm:p-4"
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="liquidglass rounded-[2.5rem] p-0 max-w-4xl w-full shadow-2xl transition-all border-white/10 overflow-hidden max-h-[95vh] flex"
+        className="liquidglass relative flex w-full max-w-4xl overflow-hidden rounded-[2.5rem] border border-white/10 p-0 shadow-[0_40px_120px_rgba(0,0,0,0.55)] max-h-[95vh]"
       >
+        <div 
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: 'radial-gradient(circle at top left, color-mix(in srgb, var(--color-twitch) 18%, transparent), transparent 40%), radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-twitch) 10%, transparent), transparent 40%)'
+          }}
+        />
         <div className="flex flex-col md:flex-row w-full overflow-y-auto custom-scrollbar">
           <div className="flex-1 min-w-0 p-6 sm:p-8 md:p-10 border-r border-white/5 bg-white/[0.01]">
             <div className="flex items-center gap-4 mb-6 sm:mb-10">

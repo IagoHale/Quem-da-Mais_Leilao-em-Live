@@ -25,7 +25,7 @@ import type { AuctionSessionExport, Donation, Game, StreamerInfo } from './types
 
 export default function App() {
   const { showToast } = useToast();
-  const { canMutate, isReadOnly } = useAuctionCoordinator();
+  const { canMutate, isReadOnly, claimOwnership } = useAuctionCoordinator();
   const {
     games,
     donators,
@@ -58,6 +58,7 @@ export default function App() {
   const [editingGame, setEditingGame] = useState<Game | null>(null);
   const [historyFilter, setHistoryFilter] = useState<string>('all');
   const [showTotal, setShowTotal] = useState(true);
+  const isAnyModalOpen = isResetModalOpen || isSettingsModalOpen || isAuctionStatsModalOpen || isBidModalOpen || isEditDonationModalOpen || isEditGameModalOpen || isRemoveGameModalOpen;
   const [streamerInfo, setStreamerInfo] = useLocalStorageState<StreamerInfo | null>(STORAGE_KEYS.streamerInfo, null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -273,8 +274,21 @@ export default function App() {
 
       {isReadOnly && (
         <div className="sticky top-[72px] z-40 mx-auto mt-3 w-full max-w-[1500px] px-4">
-          <div className="rounded-2xl border border-amber-300/15 bg-amber-500/10 px-4 py-3 text-[11px] font-bold tracking-[0.08em] text-amber-100 backdrop-blur-xl">
-            Esta aba está em modo leitura. Outra aba está controlando a sessão ativa do leilão.
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-amber-300/15 bg-amber-500/10 px-4 py-3 text-[11px] font-bold tracking-[0.08em] text-amber-100 backdrop-blur-xl">
+            <p>Esta aba está em modo leitura. Outra aba está controlando a sessão ativa do leilão.</p>
+            <button 
+              onClick={() => {
+                claimOwnership();
+                showToast({
+                  title: 'Controle assumido',
+                  message: 'Esta aba agora é a principal e pode realizar alterações.',
+                  variant: 'success',
+                });
+              }}
+              className="px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-400/20 hover:bg-amber-500/30 text-amber-200 transition-colors uppercase tracking-widest text-[9px]"
+            >
+              Assumir controle
+            </button>
           </div>
         </div>
       )}
@@ -392,21 +406,30 @@ export default function App() {
         )}
       </div>
 
-      <div className="pointer-events-none fixed inset-x-4 bottom-20 z-[95] flex justify-center">
-        <button
-          onClick={() => setIsAuctionStatsModalOpen(true)}
-          className="pointer-events-auto inline-flex items-center gap-3 rounded-full border px-6 py-3 text-sm font-black uppercase tracking-[0.2em] text-white backdrop-blur-2xl transition hover:scale-[1.02]"
-          style={{
-            borderColor: 'color-mix(in srgb, var(--color-twitch) 28%, transparent)',
-            background:
-              'linear-gradient(135deg, color-mix(in srgb, var(--color-twitch) 22%, transparent), rgba(255,255,255,0.08))',
-            boxShadow: '0 20px 70px rgba(0,0,0,0.35), 0 0 28px color-mix(in srgb, var(--color-twitch) 28%, transparent)',
-          }}
-        >
-          <Gavel className="h-4 w-4" style={{ color: 'color-mix(in srgb, var(--color-twitch) 72%, white)' }} />
-          Encerrar leilão
-        </button>
-      </div>
+      <AnimatePresence>
+        {!isAnyModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="pointer-events-none fixed inset-x-4 bottom-20 z-[95] flex justify-center"
+          >
+            <button
+              onClick={() => setIsAuctionStatsModalOpen(true)}
+              className="pointer-events-auto inline-flex items-center gap-3 rounded-full border px-6 py-3 text-sm font-black uppercase tracking-[0.2em] text-white backdrop-blur-2xl transition hover:scale-[1.02]"
+              style={{
+                borderColor: 'color-mix(in srgb, var(--color-twitch) 28%, transparent)',
+                background:
+                  'linear-gradient(135deg, color-mix(in srgb, var(--color-twitch) 22%, transparent), rgba(255,255,255,0.08))',
+                boxShadow: '0 20px 70px rgba(0,0,0,0.35), 0 0 28px color-mix(in srgb, var(--color-twitch) 28%, transparent)',
+              }}
+            >
+              <Gavel className="h-4 w-4" style={{ color: 'color-mix(in srgb, var(--color-twitch) 72%, white)' }} />
+              Encerrar leilão
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isSettingsModalOpen && (
@@ -429,7 +452,7 @@ export default function App() {
       {/* Spacer para o footer fixo */}
       <div className="h-16 flex-shrink-0" />
 
-      <footer className="fixed bottom-0 left-0 right-0 py-2 border-t border-white/5 bg-transparent backdrop-blur-md flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 z-[100] opacity-50 hover:opacity-100 transition-opacity">
+      <footer className="fixed bottom-0 left-0 right-0 py-2.5 border-t border-white/5 bg-transparent backdrop-blur-md flex flex-row items-center justify-center gap-4 z-[100] opacity-50 hover:opacity-100 transition-opacity">
         <span className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest">
           Vibecodado por{' '}
           <a

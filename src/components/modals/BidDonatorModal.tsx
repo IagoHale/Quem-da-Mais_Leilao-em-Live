@@ -19,16 +19,22 @@ export function BidDonatorModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+      className="fixed inset-0 z-[110] flex items-center justify-center bg-black/85 p-4 backdrop-blur-xl"
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="liquidglass rounded-3xl p-6 max-w-sm w-full shadow-2xl border-white/10"
+        className="liquidglass relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 p-6 shadow-[0_40px_120px_rgba(0,0,0,0.55)]"
       >
+        <div 
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: 'radial-gradient(circle at top left, color-mix(in srgb, var(--color-twitch) 18%, transparent), transparent 40%), radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-twitch) 10%, transparent), transparent 40%)'
+          }}
+        />
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-twitch/20 flex items-center justify-center text-twitch">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-500">
             <DollarSign className="w-5 h-5" />
           </div>
           <div>
@@ -85,7 +91,7 @@ export function BidDonatorModal({
             </button>
             <button
               onClick={() => onConfirm(name)}
-              className="flex-[2] py-3 rounded-xl bg-twitch hover:bg-twitch-dark text-white font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-twitch/20 active:scale-95"
+              className="flex-[2] py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
             >
               Confirmar lance
             </button>

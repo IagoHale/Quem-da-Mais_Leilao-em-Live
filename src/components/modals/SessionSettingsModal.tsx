@@ -15,21 +15,28 @@ export function SessionSettingsModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[210] flex items-center justify-center bg-black/85 p-4 backdrop-blur-xl"
+      onClick={onClose}
+      className="fixed inset-0 z-[210] flex items-center justify-center bg-black/85 p-4 backdrop-blur-xl cursor-pointer"
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 24 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 24 }}
-        className="liquidglass relative w-full max-w-xl overflow-hidden rounded-[2rem] border border-white/10 p-7 shadow-[0_40px_120px_rgba(0,0,0,0.55)]"
+        onClick={(e) => e.stopPropagation()}
+        className="liquidglass relative w-full max-w-xl overflow-hidden rounded-[2rem] border border-white/10 p-7 shadow-[0_40px_120px_rgba(0,0,0,0.55)] cursor-default"
       >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(145,70,255,0.18),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.14),transparent_38%)]" />
+        <div 
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: 'radial-gradient(circle at top left, color-mix(in srgb, var(--color-twitch) 18%, transparent), transparent 40%), radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-twitch) 10%, transparent), transparent 40%)'
+          }}
+        />
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-2 text-neutral-500 transition hover:bg-white/5 hover:text-white"
+          className="absolute right-6 top-6 z-10 rounded-full bg-white/5 p-2 text-neutral-500 transition-all hover:bg-white/10 hover:text-white"
           aria-label="Fechar configurações"
         >
-          <X className="h-4 w-4" />
+          <X className="h-5 w-5" />
         </button>
 
         <div className="relative">

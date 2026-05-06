@@ -4,16 +4,30 @@ type CoordinatorMessage =
   | { type: 'owner-check'; senderId: string }
   | { type: 'owner-present'; senderId: string }
   | { type: 'owner-claimed'; senderId: string }
+  | { type: 'owner-force'; senderId: string }
   | { type: 'owner-released'; senderId: string };
 
 export const AUCTION_CHANNEL_NAME = 'quem-da-mais-auction';
-const OWNER_DISCOVERY_MS = 180;
+const OWNER_DISCOVERY_MS = 100;
 
 export function useAuctionCoordinator() {
-  const tabIdRef = useRef(`tab-${crypto.randomUUID()}`);
+  const [tabId] = useState(() => {
+    const stored = sessionStorage.getItem('auction-tab-id');
+    if (stored) return stored;
+    const newId = `tab-${crypto.randomUUID()}`;
+    sessionStorage.setItem('auction-tab-id', newId);
+    return newId;
+  });
+  
   const channelRef = useRef<BroadcastChannel | null>(null);
   const ownerIdRef = useRef<string | null>(null);
-  const [isReadOnly, setIsReadOnly] = useState(true);
+  const [isReadOnly, setIsReadOnly] = useState(false); // Começa assumindo que pode, até descobrir que não
+
+  const claimOwnership = () => {
+    ownerIdRef.current = tabId;
+    setIsReadOnly(false);
+    channelRef.current?.postMessage({ type: 'owner-force', senderId: tabId } satisfies CoordinatorMessage);
+  };
 
   useEffect(() => {
     if (typeof BroadcastChannel === 'undefined') {
@@ -21,7 +35,6 @@ export function useAuctionCoordinator() {
       return;
     }
 
-    const tabId = tabIdRef.current;
     const channel = new BroadcastChannel(AUCTION_CHANNEL_NAME);
     channelRef.current = channel;
 
@@ -69,6 +82,13 @@ export function useAuctionCoordinator() {
         return;
       }
 
+      if (message.type === 'owner-force') {
+        ownerDetected = true;
+        ownerIdRef.current = message.senderId;
+        setIsReadOnly(true);
+        return;
+      }
+
       if (message.type === 'owner-released') {
         if (ownerIdRef.current === message.senderId) {
           ownerIdRef.current = null;
@@ -91,10 +111,11 @@ export function useAuctionCoordinator() {
       channel.close();
       channelRef.current = null;
     };
-  }, []);
+  }, [tabId]);
 
   return {
     isReadOnly,
     canMutate: !isReadOnly,
+    claimOwnership,
   };
 }

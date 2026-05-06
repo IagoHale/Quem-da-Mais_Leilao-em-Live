@@ -87,7 +87,7 @@ export function RightSidebar({
       </div>
 
       <div className="liquidglass rounded-2xl p-5 shadow-xl transition-all hover:border-white/20">
-        <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-3">
+        <div className="flex items-center gap-3 mb-3 border-b border-white/5 pb-3">
           <History className="w-4 h-4 text-emerald-500" />
           <div className="flex flex-1 items-center justify-between gap-3">
             <h2 className="text-xs font-black uppercase tracking-[0.2em] text-neutral-400">Histórico</h2>
@@ -112,7 +112,7 @@ export function RightSidebar({
           </div>
         </div>
 
-        <div className="mb-4 relative group">
+        <div className="mb-3 relative group">
           <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
             <Search className="w-3 h-3 text-neutral-600 group-focus-within:text-twitch transition-colors" />
           </div>
@@ -138,14 +138,14 @@ export function RightSidebar({
           </div>
         </div>
 
-        <div className="space-y-3 max-h-[300px] lg:max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-1.5 max-h-[300px] lg:max-h-[600px] overflow-y-auto custom-scrollbar">
           {filteredDonations.length === 0 ? (
             <p className="text-[10px] text-neutral-600 font-bold uppercase text-center py-4">Nenhum lance encontrado</p>
           ) : (
             filteredDonations.map((donation) => (
               <div
                 key={donation.id}
-                className={`p-3 rounded-xl border group relative overflow-hidden transition-all ${
+                className={`p-3 pr-24 rounded-xl border group relative overflow-hidden transition-all min-h-[58px] flex flex-col justify-center ${
                   donation.gameId === 'orphaned' ? 'bg-red-500/5 border-red-500/20 hover:border-red-500/40' : 'bg-black/20 border-white/5 hover:border-white/20'
                 }`}
               >
@@ -154,24 +154,25 @@ export function RightSidebar({
                     <AlertTriangle className="w-2.5 h-2.5 text-red-500 animate-pulse" />
                   </div>
                 )}
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-[10px] font-black text-twitch truncate max-w-[80px]">{donation.donatorName}</span>
-                  <span className={`text-[10px] font-mono font-bold ${donation.amount < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                    {donation.amount < 0 ? `-R$ ${Math.abs(donation.amount)}` : `+R$ ${donation.amount}`}
+                
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[12px] font-black text-twitch truncate max-w-[120px]">{donation.donatorName}</span>
+                  <p className={`text-[11px] font-bold truncate leading-tight ${donation.gameId === 'orphaned' ? 'text-red-400' : 'text-neutral-500'}`}>➔ {donation.gameName}</p>
+                </div>
+
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-right pointer-events-none">
+                  <span className={`text-[11px] font-mono font-black ${donation.amount < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                    {donation.amount < 0 ? `-R$ ${Math.abs(donation.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : `+R$ ${donation.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                   </span>
                 </div>
-                <div className="flex items-center justify-between gap-2">
-                  <p className={`text-[9px] font-bold truncate leading-tight ${donation.gameId === 'orphaned' ? 'text-red-400' : 'text-neutral-500'}`}>➔ {donation.gameName}</p>
-                  <button
-                    onClick={() => onEditDonation(donation)}
-                    className={`p-1 px-2 rounded transition-all ${
-                      donation.gameId === 'orphaned' ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'hover:bg-twitch/10 text-neutral-600 hover:text-twitch'
-                    }`}
-                    title="Editar lance"
-                  >
-                    <Pencil className="w-3 h-3" />
-                  </button>
-                </div>
+
+                <button
+                  onClick={() => onEditDonation(donation)}
+                  className="absolute top-1 right-1 p-1 rounded-md bg-black/60 border border-white/5 text-neutral-500 hover:text-white hover:border-white/10 transition-all opacity-0 group-hover:opacity-100 backdrop-blur-sm shadow-xl"
+                  title="Editar lance"
+                >
+                  <Pencil className="w-2.5 h-2.5" />
+                </button>
               </div>
             ))
           )}

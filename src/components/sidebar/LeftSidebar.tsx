@@ -72,7 +72,7 @@ export function LeftSidebar({
                   </div>
                 )}
               </div>
-              <p className="text-[9px] text-neutral-600 leading-tight">
+              <p className="text-[9px] text-neutral-600 leading-tight text-center">
                 Digite o nick e aperte <span className="text-neutral-400 font-bold">ENTER</span> para carregar sua identidade.
               </p>
             </div>
