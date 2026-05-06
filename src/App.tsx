@@ -235,7 +235,8 @@ export default function App() {
       
       setIsSearching(true);
       try {
-        const response = await fetch(`https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(newGameName)}&limit=5`);
+        const response = await fetch(`/api/games/search?q=${encodeURIComponent(newGameName)}`);
+        if (!response.ok) throw new Error("Erro na busca");
         const data = await response.json();
         setSearchResults(data);
       } catch (error) {
@@ -756,10 +757,9 @@ export default function App() {
                 e.preventDefault(); 
                 const firstResult = searchResults.length > 0 ? searchResults[0] : null;
                 let finalThumbnail = undefined;
-                if (firstResult && firstResult.external.toLowerCase().includes(newGameName.toLowerCase())) {
-                    finalThumbnail = firstResult.steamAppID 
-                        ? `https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${firstResult.steamAppID}/library_600x900.jpg`
-                        : firstResult.thumb;
+                
+                if (firstResult && firstResult.name.toLowerCase().includes(newGameName.toLowerCase())) {
+                    finalThumbnail = firstResult.thumb;
                 }
                 handleAddGame(newGameName, finalThumbnail); 
             }} 
@@ -811,31 +811,35 @@ export default function App() {
                     <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
                         {searchResults.length > 0 && searchResults.map((result) => (
                             <button
-                                key={result.gameID}
+                                key={result.id}
                                 type="button"
                                 onClick={() => {
-                                    const posterUrl = result.steamAppID 
-                                        ? `https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${result.steamAppID}/library_600x900.jpg`
-                                        : result.thumb;
-                                    handleAddGame(result.external, posterUrl);
+                                    handleAddGame(result.name, result.thumb);
                                 }}
                                 className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-all text-left group"
                             >
                                 <div className="flex items-center gap-5">
                                     <div className="w-10 h-14 rounded-lg overflow-hidden bg-black flex-shrink-0 border border-white/10 relative">
-                                        <img 
-                                            src={result.steamAppID 
-                                                ? `https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${result.steamAppID}/library_600x900.jpg`
-                                                : result.thumb} 
-                                            className="w-full h-full object-cover" 
-                                            referrerPolicy="no-referrer"
-                                        />
+                                        {result.thumb ? (
+                                            <img 
+                                                src={result.thumb} 
+                                                className="w-full h-full object-cover" 
+                                                referrerPolicy="no-referrer"
+                                                alt={result.name}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                              <Ghost className="w-4 h-4 text-neutral-800" />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="min-w-0">
                                       <span className="block font-bold text-[#efeff1] group-hover:text-twitch transition-colors truncate text-sm">
-                                          {result.external}
+                                          {result.name}
                                       </span>
-                                      <span className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest mt-0.5 block">Resultado Automático</span>
+                                      {result.year && (
+                                        <span className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest mt-0.5 block">{result.year}</span>
+                                      )}
                                     </div>
                                 </div>
                                 <Plus className="w-4 h-4 text-neutral-600 group-hover:text-white" />
@@ -940,7 +944,7 @@ export default function App() {
                               <div className={`w-20 h-32 sm:w-24 sm:h-36 rounded-xl overflow-hidden flex-shrink-0 border transition-all ${
                                 isLeader ? 'border-twitch' : 'border-white/5'
                               }`}>
-                                  <img src={game.imageUrl} alt={game.name} className="w-full h-full object-cover" />
+                                  <img src={game.imageUrl} alt={game.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                               </div>
                           ) : (
                               <div className="w-20 h-32 sm:w-24 sm:h-36 rounded-xl bg-neutral-900 flex items-center justify-center text-neutral-800 flex-shrink-0 border border-white/5">
@@ -1302,7 +1306,7 @@ function EditDonationModal({
                 >
                   {game.imageUrl && (
                     <div className="w-8 h-10 rounded-lg overflow-hidden flex-shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
-                       <img src={game.imageUrl} className="w-full h-full object-cover" />
+                       <img src={game.imageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     </div>
                   )}
                   <span className="truncate">{game.name}</span>

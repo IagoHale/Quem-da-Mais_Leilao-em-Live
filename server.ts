@@ -1,77 +1,120 @@
 import express from "express";
+import { createServer as createViteServer } from "vite";
 import path from "path";
-import dotenv from "dotenv";
+import cors from "cors";
 
-dotenv.config();
+const app = express();
+const PORT = 3000;
+
+app.use(cors());
+app.use(express.json());
+
+// Gerenciamento de Token da IGDB
+let twitchAccessToken: string | null = null;
+let tokenExpiry: number = 0;
+
+async function getTwitchToken() {
+  const clientId = process.env.VITE_TWITCH_CLIENT_ID;
+  const clientSecret = process.env.VITE_TWITCH_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    console.error("ERRO: VITE_TWITCH_CLIENT_ID ou VITE_TWITCH_CLIENT_SECRET não definidos no ambiente.");
+    return null;
+  }
+
+  if (twitchAccessToken && Date.now() < tokenExpiry) {
+    return twitchAccessToken;
+  }
+
+  try {
+    const response = await fetch(
+      `https://id.twitch.tv/oauth2/token?client_id=${clientId}&client_secret=${clientSecret}&grant_type=client_credentials`,
+      { method: "POST" }
+    );
+    const data = await response.json();
+    twitchAccessToken = data.access_token;
+    tokenExpiry = Date.now() + (data.expires_in - 60) * 1000; // Expira 1 min antes por segurança
+    return twitchAccessToken;
+  } catch (error) {
+    console.error("Erro ao obter token da Twitch:", error);
+    return null;
+  }
+}
+
+// Rota de busca na IGDB
+app.get("/api/games/search", async (req, res) => {
+  const { q } = req.query;
+  if (!q) return res.status(400).json({ error: "Query de busca vazia" });
+
+  const token = await getTwitchToken();
+  const clientId = process.env.VITE_TWITCH_CLIENT_ID;
+
+  if (!token || !clientId) {
+    return res.status(500).json({ error: "Configuração da API da Twitch incompleta" });
+  }
+
+  try {
+    // Busca na IGDB: Nome, Capa e Data de lançamento
+    const query = `
+      search "${q}";
+      fields name, cover.url, first_release_date, platforms.name;
+      limit 10;
+    `;
+
+    const response = await fetch("https://api.igdb.com/v4/games", {
+      method: "POST",
+      headers: {
+        "Client-ID": clientId,
+        "Authorization": `Bearer ${token}`,
+      },
+      body: query,
+    });
+
+    const data = await response.json();
+    
+    // Formatar os resultados para o frontend
+    const formattedData = data.map((game: any) => {
+      let thumb = undefined;
+      if (game.cover?.url) {
+        // Garantir protocolo HTTPS e trocar para tamanho de capa grande
+        thumb = game.cover.url.startsWith('//') 
+          ? `https:${game.cover.url}` 
+          : game.cover.url;
+        thumb = thumb.replace('t_thumb', 't_cover_big');
+      }
+
+      return {
+        id: game.id,
+        name: game.name,
+        thumb,
+        year: game.first_release_date ? new Date(game.first_release_date * 1000).getFullYear() : null
+      };
+    });
+
+    res.json(formattedData);
+  } catch (error) {
+    console.error("Erro na busca IGDB:", error);
+    res.status(500).json({ error: "Falha na comunicação com a IGDB" });
+  }
+});
 
 async function startServer() {
-  const app = express();
-  const PORT = 3000;
-
-  app.use(express.json());
-
-  // ROTA PÚBLICA (IVR API): Busca dados do canal sem necessidade de tokens privados
-  app.get("/api/public/user/:login", async (req, res) => {
-    const { login } = req.params;
-
-    try {
-      // IVR API v2 - Endpoint público para dados de usuário
-      let response = await fetch(`https://api.ivr.fi/v2/twitch/user?login=${login.toLowerCase()}`);
-      
-      if (response.status === 404) {
-        response = await fetch(`https://api.ivr.fi/v2/twitch/user/${login.toLowerCase()}`);
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        return res.status(response.status).json({ 
-          error: `Erro na API: ${response.status}`,
-          details: errorText
-        });
-      }
-
-      const data = await response.json();
-      const user = Array.isArray(data) ? data[0] : data;
-
-      if (user && (user.id || user.login || user.displayName)) {
-        res.json({
-          id: user.id || "0",
-          login: user.login || login,
-          display_name: user.displayName || user.display_name || login,
-          profile_image_url: user.logo || user.profile_image_url,
-          banner_url: user.banner,
-          primaryColorHex: user.chatColor || user.primaryColorHex,
-          offline_image_url: user.offlineBanner || user.offline_image_url,
-          description: user.bio || user.description
-        });
-      } else {
-        res.status(404).json({ error: "Canal não encontrado" });
-      }
-    } catch (error) {
-      console.error("Public API Error:", error);
-      res.status(500).json({ error: "Erro ao comunicar com a API Pública" });
-    }
-  });
-
-  // Configuração do Vite (Middleware para Dev / Estático para Prod)
   if (process.env.NODE_ENV !== "production") {
-    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
     });
   }
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);
-    console.log(`Modo: ${process.env.NODE_ENV || 'development'}`);
   });
 }
 

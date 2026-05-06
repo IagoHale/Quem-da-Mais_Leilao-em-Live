@@ -33,7 +33,19 @@ Com uma estética moderna inspirada na Twitch, o app permite que o público infl
 *   **Motion (Framer Motion):** Animações fluidas para transições de ranking e modais com `layout projections`.
 *   **Lucide React:** Conjunto de ícones minimalistas.
 *   **LocalStorage:** Persistência de dados local.
+*   **API IGDB (via Twitch Auth):** Integração para busca de dados precisos de jogos, capas em alta resolução e informações de lançamento.
 *   **API Pública (IVR):** Integração direta para busca de dados de canais da Twitch.
+
+---
+
+## ⚙️ Configuração (Variáveis de Ambiente)
+Para que a busca de jogos funcione, o projeto utiliza a API da IGDB. Você precisará de um Client ID e Client Secret da Twitch (obteníveis no [Twitch Dev Console](https://dev.twitch.tv/console)).
+
+Crie um arquivo `.env` na raiz do projeto com:
+```env
+VITE_TWITCH_CLIENT_ID=seu_client_id
+VITE_TWITCH_CLIENT_SECRET=seu_client_secret
+```
 
 ---
 *Desenvolvido para transformar donation alerts em entretenimento real.*
