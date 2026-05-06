@@ -14,4 +14,45 @@
   body {
     @apply bg-[#0e0e10] text-[#efeff1] selection:bg-[#9146FF]/30;
   }
+
+  /* Scrollbar Minimalista */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-white/10 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-white/20;
+  }
+
+  /* Hide Number Spinners */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type=number] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer utilities {
+  .liquidglass {
+    @apply bg-neutral-900/40 backdrop-blur-3xl border border-white/5 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.03)];
+    background-image: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.05) 0%,
+      transparent 40%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+  }
 }

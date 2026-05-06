@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Trophy, Plus, Trash2, Gamepad2, DollarSign, Target, TrendingUp, AlertTriangle, Search, Loader2, History, Pencil, Ghost } from 'lucide-react';
+import { Trophy, Plus, RotateCcw, Gavel, DollarSign, Target, TrendingUp, AlertTriangle, Search, Loader2, History, Pencil, Ghost, Github, Eye, EyeOff, Settings, Twitch } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 type Game = {
@@ -55,8 +55,43 @@ export default function App() {
   const [isEditGameModalOpen, setIsEditGameModalOpen] = useState(false);
   const [editingDonation, setEditingDonation] = useState<Donation | null>(null);
   const [editingGame, setEditingGame] = useState<Game | null>(null);
+  const [showTotal, setShowTotal] = useState(true);
+  const [isStreamerModalOpen, setIsStreamerModalOpen] = useState(false);
+  const [streamerInfo, setStreamerInfo] = useState<{
+    display_name: string;
+    profile_image_url: string;
+    offline_image_url: string;
+  } | null>(() => {
+    const saved = localStorage.getItem('streamerInfo');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [pendingBid, setPendingBid] = useState<{ gameId: string, amount: number } | null>(null);
   
+  // Helper to calculate leader of a specific game
+  const calculateLeader = (gameId: string, allDonations: Donation[]) => {
+    const gameDonations = allDonations.filter(d => d.gameId === gameId);
+    if (gameDonations.length === 0) return undefined;
+    
+    const totals: Record<string, number> = {};
+    gameDonations.forEach(d => {
+      totals[d.donatorName] = (totals[d.donatorName] || 0) + d.amount;
+    });
+
+    let leaderName = '';
+    let maxAmount = -Infinity;
+
+    Object.entries(totals).forEach(([name, amount]) => {
+      // Leader is the one with the highest total amount
+      if (amount > maxAmount || (amount === maxAmount && leaderName === '')) {
+        maxAmount = amount;
+        leaderName = name;
+      }
+    });
+
+    return leaderName;
+  };
+
+  const [isLinking, setIsLinking] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -73,6 +108,14 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('donations', JSON.stringify(donations));
   }, [donations]);
+
+  useEffect(() => {
+    if (streamerInfo) {
+      localStorage.setItem('streamerInfo', JSON.stringify(streamerInfo));
+    } else {
+      localStorage.removeItem('streamerInfo');
+    }
+  }, [streamerInfo]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -143,23 +186,32 @@ export default function App() {
     const finalName = name.trim() || 'Anônimo';
     const targetGame = games.find(g => g.id === gameId);
     
+    const newDonation: Donation = {
+      id: crypto.randomUUID(),
+      donatorName: finalName,
+      amount,
+      gameId,
+      gameName: targetGame?.name || 'Unknown',
+      timestamp: Date.now()
+    };
+
+    const updatedDonations = [newDonation, ...donations];
+    setDonations(updatedDonations);
+
     setGames(prev =>
-      prev.map(game =>
-        game.id === gameId ? { ...game, value: game.value + amount, lastDonator: finalName } : game
-      )
+      prev.map(game => {
+        if (game.id === gameId) {
+          return { 
+            ...game, 
+            value: game.value + amount, 
+            lastDonator: calculateLeader(gameId, updatedDonations) 
+          };
+        }
+        return game;
+      })
     );
 
     if (amount !== 0) {
-      // Record individual donation
-      setDonations(prev => [{
-        id: crypto.randomUUID(),
-        donatorName: finalName,
-        amount,
-        gameId,
-        gameName: targetGame?.name || 'Unknown',
-        timestamp: Date.now()
-      }, ...prev]);
-
       // Update donator stats (Cost is always absolute)
       const cost = Math.abs(amount);
       setDonators(prev => {
@@ -183,15 +235,28 @@ export default function App() {
     const newGame = games.find(g => g.id === newGameId);
     if (!newGame) return;
 
+    const updatedDonations = donations.map(d => 
+      d.id === donationId ? { ...d, gameId: newGameId, gameName: newGame.name } : d
+    );
+    setDonations(updatedDonations);
+
     setGames(prev => prev.map(game => {
-      if (game.id === oldGameId) return { ...game, value: game.value - donation.amount };
-      if (game.id === newGameId) return { ...game, value: game.value + donation.amount, lastDonator: donation.donatorName };
+      if (game.id === oldGameId) {
+        return { 
+          ...game, 
+          value: game.value - donation.amount,
+          lastDonator: calculateLeader(oldGameId, updatedDonations)
+        };
+      }
+      if (game.id === newGameId) {
+        return { 
+          ...game, 
+          value: game.value + donation.amount, 
+          lastDonator: calculateLeader(newGameId, updatedDonations)
+        };
+      }
       return game;
     }));
-
-    setDonations(prev => prev.map(d => 
-      d.id === donationId ? { ...d, gameId: newGameId, gameName: newGame.name } : d
-    ));
   };
 
   const handleUpdateDonation = (donationId: string, name: string, amount: number, gameId: string) => {
@@ -203,50 +268,48 @@ export default function App() {
 
     const finalName = name.trim() || 'Anônimo';
 
-    // 1. Atualizar Jogos (Subtrair antigo, somar novo)
+    // 1. Atualizar registros de doação
+    const updatedDonations = donations.map(d => 
+      d.id === donationId 
+        ? { ...d, donatorName: finalName, amount, gameId, gameName: newGame.name } 
+        : d
+    );
+    setDonations(updatedDonations);
+
+    // 2. Atualizar Jogos (com líderes corretos)
     setGames(prev => prev.map(game => {
       let newValue = game.value;
-      let lastDonator = game.lastDonator;
 
       if (game.id === oldDonation.gameId) {
         newValue = newValue - oldDonation.amount;
       }
       
       if (game.id === gameId) {
-        newValue = newValue + amount;
-        lastDonator = finalName;
+        newValue = newValue + (gameId === oldDonation.gameId ? (amount - oldDonation.amount) : amount);
       }
 
-      return { ...game, value: newValue, lastDonator };
+      // Se o jogo foi afetado, recalculamos o líder
+      if (game.id === oldDonation.gameId || game.id === gameId) {
+        return { 
+          ...game, 
+          value: newValue, 
+          lastDonator: calculateLeader(game.id, updatedDonations) 
+        };
+      }
+
+      return game;
     }));
 
-    // 2. Atualizar Donators (Reajustar totais acumulados)
+    // 3. Atualizar Donators (Reajustar totais acumulados)
     setDonators(prev => {
-      let next = [...prev];
-      
-      // Subtrair do antigo nome
-      const oldDonatorIdx = next.findIndex(d => d.name.toLowerCase() === oldDonation.donatorName.toLowerCase());
-      if (oldDonatorIdx !== -1) {
-        next[oldDonatorIdx] = { ...next[oldDonatorIdx], total: next[oldDonatorIdx].total - oldDonation.amount };
-      }
-
-      // Somar no novo nome
-      const newDonatorIdx = next.findIndex(d => d.name.toLowerCase() === finalName.toLowerCase());
-      if (newDonatorIdx !== -1) {
-        next[newDonatorIdx] = { ...next[newDonatorIdx], total: next[newDonatorIdx].total + amount };
-      } else {
-        next.push({ name: finalName, total: amount });
-      }
-
-      return next.filter(d => d.total > 0);
+      // Re-calculating all donator totals from donations for 100% accuracy after edit
+      const totals: Record<string, number> = {};
+      updatedDonations.forEach(d => {
+        const dName = d.donatorName;
+        totals[dName] = (totals[dName] || 0) + Math.abs(d.amount);
+      });
+      return Object.entries(totals).map(([dName, total]) => ({ name: dName, total }));
     });
-
-    // 3. Atualizar o registro da doação
-    setDonations(prev => prev.map(d => 
-      d.id === donationId 
-        ? { ...d, donatorName: finalName, amount, gameId, gameName: newGame.name } 
-        : d
-    ));
 
     setIsEditDonationModalOpen(false);
     setEditingDonation(null);
@@ -284,59 +347,174 @@ export default function App() {
   const sortedDonators = [...donators].sort((a, b) => b.total - a.total).slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-[#0e0e10] text-[#efeff1] font-sans selection:bg-[#9146FF]/30">
-      <header className="sticky top-0 z-50 bg-[#18181b]/95 backdrop-blur-md border-b border-white/5 shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
+    <div className="min-h-screen flex flex-col bg-[#0e0e10] text-[#efeff1] font-sans selection:bg-[#9146FF]/30 relative overflow-x-hidden">
+      {/* Background Banner (Prioriza a capa do canal, se não tiver usa o banner offline) */}
+      {(streamerInfo?.banner_url || streamerInfo?.offline_image_url || streamerInfo?.profile_image_url) && (
+        <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+          <motion.img 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.4 }}
+            key={streamerInfo.banner_url || streamerInfo.profile_image_url}
+            src={streamerInfo.banner_url || streamerInfo.offline_image_url || streamerInfo.profile_image_url} 
+            className="w-full h-full object-cover"
+            alt=""
+          />
+          <div className="absolute inset-0 bg-[#0e0e10]/40" />
+        </div>
+      )}
+
+      <header className="sticky top-0 z-50 liquidglass shadow-none relative backdrop-blur-3xl !border-none border-0">
+        <div className="w-full max-w-[1800px] mx-auto px-4 py-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-h-[72px]">
+          {/* Lado Esquerdo: Logo */}
+          <div className="flex items-center gap-3">
             <motion.div 
               whileHover={{ rotate: 10, scale: 1.1 }}
-              className="bg-[#9146FF] p-2 rounded-xl shadow-[0_0_20px_rgba(145,70,255,0.4)]"
+              className="bg-[#9146FF] p-2 rounded-xl shadow-[0_0_20px_rgba(145,70,255,0.4)] flex-shrink-0"
             >
-              <Gamepad2 className="w-6 h-6 text-white" />
+              <Gavel className="w-5 h-5 text-white" />
             </motion.div>
-            <div>
-              <h1 className="text-xl font-display font-bold tracking-tight text-white uppercase sm:text-2xl flex flex-col sm:flex-row sm:items-baseline gap-1.5 sm:gap-3">
-                QUEM DA MAIS <span className="text-[#9146FF] text-[10px] sm:text-xs tracking-[0.2em] font-black opacity-80">- LEILÃO EM LIVE -</span>
-              </h1>
-            </div>
+            <h1 className="text-lg font-display font-bold tracking-tight text-white uppercase flex flex-col leading-none">
+              QUEM DA MAIS
+              <span className="text-[#9146FF] text-[8px] tracking-[0.2em] font-black opacity-60">LEILÃO EM LIVE</span>
+            </h1>
           </div>
           
-          <div className="flex items-center gap-3 sm:gap-8 bg-black/40 px-3 sm:px-8 py-2 sm:py-2.5 rounded-2xl border border-white/5 ring-1 ring-white/5">
-            <div className="flex flex-col items-center">
-              <span className="text-[8px] sm:text-[9px] text-neutral-500 uppercase tracking-widest font-black mb-0.5 sm:mb-1">Acumulado</span>
-              <div className="flex items-baseline gap-1 text-emerald-400">
-                <span className="text-[9px] sm:text-[10px] font-black opacity-60">R$</span>
-                <span className="text-xl sm:text-2xl font-mono font-bold leading-none tracking-tighter">
-                  {totalRaised.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </span>
+          {/* Lado Direito: Acumulado e Botões */}
+          <div className="flex items-center justify-end gap-3 sm:gap-6">
+            <div className="flex items-center gap-3 bg-black/40 px-3 sm:px-4 py-1.5 rounded-2xl border border-white/5 ring-1 ring-white/5">
+              <button
+                onClick={() => setShowTotal(!showTotal)}
+                className="text-neutral-600 hover:text-white transition-all p-1"
+                title={showTotal ? "Esconder total" : "Mostrar total"}
+              >
+                {showTotal ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+              </button>
+              
+              <div className="flex flex-col items-center min-w-[80px]">
+                <span className="text-[7px] text-neutral-500 uppercase tracking-widest font-black mb-0.5">Total Arrematado</span>
+                <div className="flex items-baseline gap-1 text-emerald-400 leading-none">
+                  <span className="text-[9px] font-black opacity-60 mr-1">R$</span>
+                  <span className="text-lg font-mono font-bold tracking-tighter">
+                    {showTotal ? totalRaised.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '****'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-6 w-[1px] bg-white/10 mx-1" />
+              
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setIsResetModalOpen(true)}
+                  className="p-1.5 text-neutral-600 hover:text-red-500 transition-all"
+                  title="Reiniciar Leilão"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
-            
-            <div className="h-6 sm:h-8 w-[1px] bg-white/10" />
-
-            <button
-              onClick={() => setIsResetModalOpen(true)}
-              className="p-2 sm:p-2.5 text-neutral-600 hover:text-red-500 transition-all"
-              title="Resetar"
-            >
-              <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-6 flex flex-col lg:flex-row gap-6 sm:gap-8">
-        {/* Sidebar: Top Donators & History */}
+      <div className="w-full max-w-[1800px] mx-auto px-4 py-6 flex flex-col lg:flex-row gap-10 relative z-10 flex-grow">
+        {/* Sidebar Left: Maiores Arrematadores */}
         <aside className="w-full lg:w-64 flex-shrink-0 space-y-6 order-2 lg:order-1">
-          <div className="bg-[#18181b] rounded-2xl border border-white/5 p-5 shadow-xl">
+          <div className="liquidglass rounded-2xl p-5 shadow-xl transition-all hover:border-white/20">
+            <div className="flex items-center gap-3 mb-4 border-b border-white/5 pb-3">
+              <Twitch className="w-4 h-4 text-[#9146FF]" />
+              <div className="flex-1 flex items-center justify-between">
+                <h2 className="text-xs font-black uppercase tracking-[0.2em] text-neutral-400">Host do leilão</h2>
+                {streamerInfo && (
+                  <button 
+                    onClick={() => {
+                      setStreamerInfo(null);
+                      localStorage.removeItem('streamer_info');
+                    }}
+                    className="text-[9px] text-neutral-600 hover:text-red-500 font-bold uppercase transition-colors"
+                  >
+                    Trocar
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            <div className="min-h-[82px] flex flex-col justify-center">
+              {streamerInfo ? (
+                <div className="flex items-center gap-4">
+                  <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="w-12 h-12 rounded-full border-2 border-[#9146FF] p-0.5 overflow-hidden flex-shrink-0"
+                  >
+                    <img src={streamerInfo.profile_image_url} alt={streamerInfo.display_name} className="w-full h-full object-cover rounded-full" />
+                  </motion.div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-black text-white uppercase tracking-wider truncate mb-1">
+                      {streamerInfo.display_name}
+                    </p>
+                    <a 
+                      href={`https://twitch.tv/${streamerInfo.login}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="text-[10px] text-[#9146FF] font-bold hover:underline flex items-center gap-1"
+                    >
+                      twitch.tv/{streamerInfo.login}
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Nick da Twitch..."
+                      className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-2 text-xs text-white placeholder:text-neutral-700 focus:outline-none focus:ring-1 focus:ring-[#9146FF] transition-all"
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter') {
+                          const login = e.currentTarget.value.trim();
+                          if (!login) return;
+                          
+                          setIsLinking(true);
+                          try {
+                            const res = await fetch(`/api/twitch/user/${login}`);
+                            const data = await res.json();
+                            
+                            if (data.error) throw new Error(data.error);
+                            
+                            setStreamerInfo(data);
+                            localStorage.setItem('streamer_info', JSON.stringify(data));
+                          } catch (err) {
+                            alert('Erro ao buscar canal. Verifique o nick.');
+                          } finally {
+                            setIsLinking(false);
+                          }
+                        }
+                      }}
+                      disabled={isLinking}
+                    />
+                    {isLinking && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="w-3 h-3 text-[#9146FF] animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[9px] text-neutral-600 leading-tight">
+                    Digite o nick e aperte <span className="text-neutral-400 font-bold">ENTER</span> para carregar sua identidade.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="liquidglass rounded-2xl p-5 shadow-xl transition-all hover:border-white/20">
             <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-3">
               <Trophy className="w-4 h-4 text-yellow-500" />
-              <h2 className="text-xs font-black uppercase tracking-[0.2em] text-neutral-400">Top Donators</h2>
+              <h2 className="text-xs font-black uppercase tracking-[0.2em] text-neutral-400">Maiores Arrematadores</h2>
             </div>
             
             <div className="space-y-4">
               {sortedDonators.length === 0 ? (
-                <p className="text-[10px] text-neutral-600 font-bold uppercase text-center py-4">Sem doações</p>
+                <p className="text-[10px] text-neutral-600 font-bold uppercase text-center py-4">Nenhum lance ainda</p>
               ) : (
                 sortedDonators.map((donator, idx) => (
                   <motion.div 
@@ -349,46 +527,9 @@ export default function App() {
                       <span className="text-sm font-bold truncate group-hover:text-[#9146FF] transition-colors">{donator.name}</span>
                     </div>
                     <span className="font-mono text-xs font-bold text-emerald-500/80 italic">
-                      {donator.total.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+                      R$ {donator.total.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
                     </span>
                   </motion.div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="bg-[#18181b] rounded-2xl border border-white/5 p-5 shadow-xl">
-            <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-3">
-              <History className="w-4 h-4 text-emerald-500" />
-              <h2 className="text-xs font-black uppercase tracking-[0.2em] text-neutral-400">Histórico</h2>
-            </div>
-            
-            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-              {donations.length === 0 ? (
-                <p className="text-[10px] text-neutral-600 font-bold uppercase text-center py-4">Nenhum lance</p>
-              ) : (
-                donations.map((donation) => (
-                  <div key={donation.id} className="p-3 bg-black/20 rounded-xl border border-white/5 group relative overflow-hidden">
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="text-[10px] font-black text-[#9146FF] truncate max-w-[80px]">{donation.donatorName}</span>
-                      <span className={`text-[10px] font-mono font-bold ${donation.amount < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                        {donation.amount < 0 ? `-R$ ${Math.abs(donation.amount)}` : `+R$ ${donation.amount}`}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                       <p className="text-[9px] text-neutral-500 font-bold truncate leading-tight">➔ {donation.gameName}</p>
-                       <button 
-                          onClick={() => {
-                            setEditingDonation(donation);
-                            setIsEditDonationModalOpen(true);
-                          }}
-                          className="p-1 px-2 hover:bg-[#9146FF]/10 rounded text-neutral-600 hover:text-[#9146FF] transition-all"
-                          title="Editar lance"
-                       >
-                         <Pencil className="w-3 h-3" />
-                       </button>
-                    </div>
-                  </div>
                 ))
               )}
             </div>
@@ -396,7 +537,21 @@ export default function App() {
         </aside>
 
         {/* Content Area */}
-        <main className="flex-1 max-w-2xl mx-auto w-full order-1 lg:order-2">
+        <main className="flex-1 min-w-0 flex flex-col items-stretch order-1 lg:order-2">
+        {/* Modal de Streamer/Twitch */}
+        <AnimatePresence>
+          {isStreamerModalOpen && (
+            <StreamerSettingsModal 
+              currentInfo={streamerInfo}
+              onConfirm={(info) => {
+                setStreamerInfo(info);
+                setIsStreamerModalOpen(false);
+              }}
+              onCancel={() => setIsStreamerModalOpen(false)}
+            />
+          )}
+        </AnimatePresence>
+
         {/* Modal de Reset Customizado */}
         <AnimatePresence>
           {isResetModalOpen && (
@@ -410,7 +565,7 @@ export default function App() {
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-[#18181b] border border-white/10 rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center"
+                className="liquidglass rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center border-white/10"
               >
                 <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500 border border-red-500/20">
                   <AlertTriangle className="w-8 h-8" />
@@ -479,7 +634,7 @@ export default function App() {
         </AnimatePresence>
 
         {/* Barra de Busca Compacta */}
-        <div ref={dropdownRef} className="mb-12 relative group z-40">
+        <div ref={dropdownRef} className="mb-12 relative group z-40 w-full">
           <form 
             onSubmit={(e) => { 
                 e.preventDefault(); 
@@ -492,32 +647,35 @@ export default function App() {
                 }
                 handleAddGame(newGameName, finalThumbnail); 
             }} 
-            className="relative bg-[#1f1f23] border border-white/10 rounded-2xl p-1.5 flex items-center shadow-xl focus-within:border-[#9146FF]/50 transition-colors"
+            className="relative liquidglass rounded-2xl p-1.5 flex items-center shadow-2xl focus-within:ring-2 focus-within:ring-[#9146FF]/30 transition-all overflow-hidden"
           >
-            <div className="pl-4 pr-2 text-neutral-500">
-                {isSearching ? <Loader2 className="w-5 h-5 text-[#9146FF] animate-spin" /> : <Search className="w-5 h-5" />}
+            <div className="absolute inset-0 bg-white/5 pointer-events-none" />
+            <div className="relative z-10 flex items-center w-full">
+              <div className="pl-4 pr-2 text-neutral-500">
+                  {isSearching ? <Loader2 className="w-5 h-5 text-[#9146FF] animate-spin" /> : <Search className="w-5 h-5" />}
+              </div>
+              <input
+                type="text"
+                value={newGameName}
+                onChange={(e) => {
+                  setNewGameName(e.target.value);
+                  setShowDropdown(true);
+                }}
+                onFocus={() => setShowDropdown(true)}
+                placeholder="Busque jogos ou adicione uma atividade personalizada"
+                className="flex-1 bg-transparent border-none text-sm px-1 py-2 focus:outline-none text-white placeholder:text-neutral-600 font-medium"
+                maxLength={60}
+                autoComplete="off"
+              />
+              <button
+                type="submit"
+                disabled={!newGameName.trim()}
+                className="bg-[#9146FF] hover:bg-[#a970ff] text-white px-4 py-2.5 rounded-xl font-bold uppercase tracking-tighter transition-all text-xs disabled:opacity-20 flex items-center justify-center gap-2 group/btn relative overflow-hidden"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add</span>
+              </button>
             </div>
-            <input
-              type="text"
-              value={newGameName}
-              onChange={(e) => {
-                setNewGameName(e.target.value);
-                setShowDropdown(true);
-              }}
-              onFocus={() => setShowDropdown(true)}
-              placeholder="Busque jogos ou adicione uma atividade personalizada"
-              className="flex-1 bg-transparent border-none text-sm px-1 py-2 focus:outline-none text-white placeholder:text-neutral-600 font-medium"
-              maxLength={60}
-              autoComplete="off"
-            />
-            <button
-              type="submit"
-              disabled={!newGameName.trim()}
-              className="bg-[#9146FF] hover:bg-[#a970ff] text-white px-4 py-2.5 rounded-xl font-bold uppercase tracking-tighter transition-all text-xs disabled:opacity-20 flex items-center justify-center gap-2 group/btn"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add</span>
-            </button>
           </form>
 
           {/* Dropdown de Resultados da Busca */}
@@ -527,9 +685,9 @@ export default function App() {
                    initial={{ opacity: 0, y: -20, scale: 0.98 }}
                    animate={{ opacity: 1, y: 0, scale: 1 }}
                    exit={{ opacity: 0, y: -20, scale: 0.98 }}
-                   className="absolute top-full left-0 right-0 mt-4 bg-[#1f1f23] border border-white/10 rounded-3xl shadow-[0_40px_70px_-15px_rgba(0,0,0,0.8)] overflow-hidden z-[60] backdrop-blur-2xl bg-opacity-95"
+                   className="absolute top-full left-0 right-0 mt-4 liquidglass rounded-3xl shadow-[0_40px_70px_-15px_rgba(0,0,0,0.8)] overflow-hidden z-[60]"
                 >
-                    <div className="px-5 py-3 border-b border-white/5 bg-white/2 flex items-center justify-between">
+                    <div className="px-5 py-3 border-b border-white/5 bg-white/5 flex items-center justify-between">
                       <span className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Banco de Dados (PC)</span>
                       {isSearching && <Loader2 className="w-3 h-3 text-[#9146FF] animate-spin" />}
                     </div>
@@ -594,9 +752,9 @@ export default function App() {
         </div>
 
         {/* Lista de Jogos (Ranking) */}
-        <div className="grid gap-8">
+        <div className="flex flex-col gap-8 min-h-[600px] w-full flex-grow transition-all duration-500">
           {games.length === 0 ? (
-            <div className="text-center py-40 bg-white/2 rounded-[3rem] border border-dashed border-white/10 flex flex-col items-center gap-6">
+            <div className="w-full flex-1 text-center py-40 bg-white/[0.02] rounded-[3rem] border border-dashed border-white/10 flex flex-col items-center justify-center gap-6">
               <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center opacity-30">
                 <Target className="w-10 h-10 text-neutral-400" />
               </div>
@@ -621,10 +779,10 @@ export default function App() {
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: 10 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-                      className={`relative group rounded-2xl transition-all duration-300 overflow-hidden ${
+                      className={`relative group rounded-2xl transition-all duration-500 overflow-hidden liquidglass ${
                         isLeader 
-                          ? 'bg-gradient-to-br from-[#1f1925] to-[#131118] border border-[#9146FF]/30 shadow-xl ring-1 ring-white/5' 
-                          : 'bg-[#18181b] border border-white/5 hover:border-white/10'
+                          ? 'border-[#9146FF]/40 shadow-[0_0_40px_rgba(145,70,255,0.15)] ring-1 ring-[#9146FF]/20 hover:border-[#9146FF]/60' 
+                          : 'hover:border-white/20'
                       }`}
                     >
                       {/* Barra de Progresso em Background */}
@@ -660,7 +818,7 @@ export default function App() {
                               </div>
                           ) : (
                               <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-xl bg-neutral-900 flex items-center justify-center text-neutral-800 flex-shrink-0 border border-white/5">
-                                  <Gamepad2 className="w-10 h-10 opacity-20" />
+                                  <Gavel className="w-10 h-10 opacity-20" />
                               </div>
                           )}
 
@@ -719,7 +877,66 @@ export default function App() {
           )}
         </div>
         </main>
+
+        {/* Sidebar Right: History */}
+        <aside className="w-full lg:w-64 flex-shrink-0 space-y-6 order-3">
+          <div className="liquidglass rounded-2xl p-5 shadow-xl transition-all hover:border-white/20">
+            <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-3">
+              <History className="w-4 h-4 text-emerald-500" />
+              <h2 className="text-xs font-black uppercase tracking-[0.2em] text-neutral-400">Histórico</h2>
+            </div>
+            
+            <div className="space-y-3 max-h-[300px] lg:max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+              {donations.length === 0 ? (
+                <p className="text-[10px] text-neutral-600 font-bold uppercase text-center py-4">Nenhum lance</p>
+              ) : (
+                donations.map((donation) => (
+                  <div key={donation.id} className="p-3 bg-black/20 rounded-xl border border-white/5 group relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="text-[10px] font-black text-[#9146FF] truncate max-w-[80px]">{donation.donatorName}</span>
+                      <span className={`text-[10px] font-mono font-bold ${donation.amount < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                        {donation.amount < 0 ? `-R$ ${Math.abs(donation.amount)}` : `+R$ ${donation.amount}`}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                       <p className="text-[9px] text-neutral-500 font-bold truncate leading-tight">➔ {donation.gameName}</p>
+                       <button 
+                          onClick={() => {
+                            setEditingDonation(donation);
+                            setIsEditDonationModalOpen(true);
+                          }}
+                          className="p-1 px-2 hover:bg-[#9146FF]/10 rounded text-neutral-600 hover:text-[#9146FF] transition-all"
+                          title="Editar lance"
+                       >
+                         <Pencil className="w-3 h-3" />
+                       </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </aside>
       </div>
+
+      {/* Spacer para o footer fixo para que o conteúdo não fique escondido sob ele */}
+      <div className="h-16 flex-shrink-0" />
+
+      <footer className="fixed bottom-0 left-0 right-0 py-2 border-t border-white/5 bg-transparent backdrop-blur-md flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 z-[100] opacity-50 hover:opacity-100 transition-opacity">
+        <span className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest">
+          Vibecodado por iagohale
+        </span>
+        <div className="hidden sm:block h-3 w-[1px] bg-white/10" />
+        <a 
+          href="https://github.com/IagoHale/Quem-da-Mais_Leilao-em-Live" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-neutral-400 hover:text-white transition-colors group"
+        >
+          <Github className="w-3.5 h-3.5" />
+          <span className="text-[9px] font-black uppercase tracking-tighter group-hover:underline">Repositório</span>
+        </a>
+      </footer>
     </div>
   );
 }
@@ -743,12 +960,12 @@ function EditGameModal({
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl"
     >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="bg-[#18181b] border border-white/10 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 max-w-md w-full shadow-2xl ring-1 ring-white/5 max-h-[90vh] overflow-y-auto"
-      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          className="liquidglass rounded-[2.5rem] p-6 sm:p-8 max-w-md w-full shadow-2xl transition-all border-white/10"
+        >
         <div className="flex items-center gap-4 mb-6 sm:mb-8">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#9146FF]/10 flex items-center justify-center text-[#9146FF]">
             <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -824,12 +1041,12 @@ function EditDonationModal({
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[150] flex items-center justify-center p-2 sm:p-4 bg-black/95 backdrop-blur-2xl"
     >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="bg-[#18181b] border border-white/10 rounded-[2rem] sm:rounded-[2.5rem] p-0 max-w-4xl w-full shadow-2xl ring-1 ring-white/5 overflow-hidden max-h-[95vh] flex"
-      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          className="liquidglass rounded-[2.5rem] p-0 max-w-4xl w-full shadow-2xl transition-all border-white/10 overflow-hidden max-h-[95vh] flex"
+        >
         <div className="flex flex-col md:flex-row w-full overflow-y-auto custom-scrollbar">
           {/* Coluna Esquerda: Info & Valor */}
           <div className="flex-1 p-6 sm:p-8 md:p-10 border-r border-white/5 bg-white/[0.01]">
@@ -1025,7 +1242,7 @@ function BidDonatorModal({
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="bg-[#18181b] border border-white/10 rounded-3xl p-6 max-w-sm w-full shadow-2xl"
+        className="liquidglass rounded-3xl p-6 max-w-sm w-full shadow-2xl border-white/10"
       >
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-[#9146FF]/20 flex items-center justify-center text-[#9146FF]">
@@ -1096,6 +1313,121 @@ function BidDonatorModal({
           >
             Cancelar
           </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function StreamerSettingsModal({ 
+  currentInfo,
+  onConfirm,
+  onCancel 
+}: { 
+  currentInfo: any,
+  onConfirm: (info: any) => void,
+  onCancel: () => void 
+}) {
+  const [nickname, setNickname] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSearch = async () => {
+    if (!nickname.trim()) return;
+    
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/twitch/user/${nickname.trim()}`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        onConfirm(data);
+      } else {
+        setError(data.error || "Canal não encontrado");
+      }
+    } catch (err) {
+      setError("Erro ao conectar com o servidor");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl"
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="liquidglass rounded-[2rem] p-6 sm:p-8 max-w-sm w-full shadow-2xl border-white/10"
+      >
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-[#9146FF]/10 flex items-center justify-center text-[#9146FF]">
+            <Twitch className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white">Vincular Twitch</h2>
+            <p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest">Sincronize sua identidade</p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {currentInfo && (
+            <div className="p-4 bg-[#9146FF]/5 border border-[#9146FF]/20 rounded-2xl flex items-center gap-4 mb-4">
+              <img src={currentInfo.profile_image_url} className="w-12 h-12 rounded-full border-2 border-[#9146FF]" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black text-[#9146FF] uppercase tracking-widest">Canal Atual</p>
+                <p className="text-sm font-bold text-white truncate">{currentInfo.display_name}</p>
+              </div>
+              <button 
+                onClick={() => onConfirm(null)}
+                className="text-[9px] font-black text-red-500 uppercase hover:underline"
+              >
+                Remover
+              </button>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest pl-1">Seu Nickname na Twitch</label>
+            <div className="relative">
+              <input
+                type="text"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder="Ex: alanzoka"
+                className="w-full bg-black/40 border border-white/5 focus:border-[#9146FF]/30 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-neutral-700"
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              />
+              {isLoading && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 className="w-4 h-4 text-[#9146FF] animate-spin" />
+                </div>
+              )}
+            </div>
+            {error && <p className="text-[10px] text-red-500 font-bold px-1">{error}</p>}
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={handleSearch}
+              disabled={isLoading || !nickname.trim()}
+              className="w-full py-4 rounded-xl bg-[#9146FF] hover:bg-[#a970ff] text-white font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-[#9146FF]/20 disabled:opacity-20 translate-y-0 active:translate-y-1"
+            >
+              {isLoading ? "Buscando..." : "Sincronizar Canal"}
+            </button>
+            <button
+              onClick={onCancel}
+              className="w-full py-2 text-[10px] font-bold text-neutral-600 hover:text-white transition-colors uppercase tracking-widest"
+            >
+              Fechar
+            </button>
+          </div>
         </div>
       </motion.div>
     </motion.div>
