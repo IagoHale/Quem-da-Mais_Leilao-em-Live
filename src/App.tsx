@@ -611,21 +611,42 @@ export default function App() {
               {sortedDonators.length === 0 ? (
                 <p className="text-[10px] text-neutral-600 font-bold uppercase text-center py-4">Nenhum lance ainda</p>
               ) : (
-                sortedDonators.map((donator, idx) => (
-                  <motion.div 
-                    layout
-                    key={donator.name} 
-                    className="flex items-center justify-between group"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className={`text-[10px] font-black ${idx === 0 ? 'text-yellow-500' : 'text-neutral-700'}`}>0{idx + 1}</span>
-                      <span className="text-sm font-bold truncate group-hover:text-twitch transition-colors">{donator.name}</span>
-                    </div>
-                    <span className="font-mono text-xs font-bold text-emerald-500/80 italic">
-                      R$ {donator.total.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
-                    </span>
-                  </motion.div>
-                ))
+                sortedDonators.map((donator, idx) => {
+                  const isGold = idx === 0;
+                  const isSilver = idx === 1;
+                  const isBronze = idx === 2;
+
+                  return (
+                    <motion.div 
+                      layout
+                      key={donator.name} 
+                      className={`flex items-center justify-between group p-2 rounded-xl transition-all ${
+                        isGold ? 'bg-yellow-500/5' : isSilver ? 'bg-neutral-200/5' : isBronze ? 'bg-amber-800/5' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className={`text-[10px] font-black w-5 h-5 rounded flex items-center justify-center border ${
+                          isGold ? 'bg-yellow-500 text-black border-yellow-400' : 
+                          isSilver ? 'bg-neutral-300 text-black border-neutral-200' : 
+                          isBronze ? 'bg-amber-700 text-white border-amber-600' : 
+                          'text-neutral-700 border-white/5 bg-white/5'
+                        }`}>
+                          {idx + 1}
+                        </span>
+                        <span className={`text-sm font-bold truncate transition-colors ${
+                          isGold ? 'text-yellow-200' : isSilver ? 'text-neutral-200' : isBronze ? 'text-amber-200' : 'text-neutral-300 group-hover:text-twitch'
+                        }`}>
+                          {donator.name}
+                        </span>
+                      </div>
+                      <span className={`font-mono text-xs font-black italic ${
+                        isGold ? 'text-yellow-500' : isSilver ? 'text-neutral-300' : isBronze ? 'text-amber-600' : 'text-emerald-500/80'
+                      }`}>
+                        R$ {donator.total.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+                      </span>
+                    </motion.div>
+                  );
+                })
               )}
             </div>
           </div>
