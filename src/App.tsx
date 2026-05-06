@@ -52,7 +52,9 @@ export default function App() {
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const [isEditDonationModalOpen, setIsEditDonationModalOpen] = useState(false);
+  const [isEditGameModalOpen, setIsEditGameModalOpen] = useState(false);
   const [editingDonation, setEditingDonation] = useState<Donation | null>(null);
+  const [editingGame, setEditingGame] = useState<Game | null>(null);
   const [pendingBid, setPendingBid] = useState<{ gameId: string, amount: number } | null>(null);
   
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -248,6 +250,20 @@ export default function App() {
 
     setIsEditDonationModalOpen(false);
     setEditingDonation(null);
+  };
+
+  const handleUpdateGame = (gameId: string, name: string, imageUrl: string) => {
+    setGames(prev => prev.map(g => 
+      g.id === gameId ? { ...g, name: name.trim(), imageUrl: imageUrl.trim() } : g
+    ));
+    
+    // Atualizar também o nome do jogo nos registros de doações
+    setDonations(prev => prev.map(d => 
+      d.gameId === gameId ? { ...d, gameName: name.trim() } : d
+    ));
+
+    setIsEditGameModalOpen(false);
+    setEditingGame(null);
   };
 
   const resetAuction = () => {
@@ -448,6 +464,20 @@ export default function App() {
           )}
         </AnimatePresence>
 
+        {/* Modal de edição de jogo */}
+        <AnimatePresence>
+          {isEditGameModalOpen && editingGame && (
+            <EditGameModal 
+              game={editingGame}
+              onConfirm={handleUpdateGame}
+              onCancel={() => {
+                setIsEditGameModalOpen(false);
+                setEditingGame(null);
+              }}
+            />
+          )}
+        </AnimatePresence>
+
         {/* Barra de Busca Compacta */}
         <div ref={dropdownRef} className="mb-12 relative group z-40">
           <form 
@@ -492,53 +522,72 @@ export default function App() {
 
           {/* Dropdown de Resultados da Busca */}
           <AnimatePresence>
-            {showDropdown && searchResults.length > 0 && (
+            {showDropdown && newGameName.trim().length >= 2 && (
                 <motion.div
                    initial={{ opacity: 0, y: -20, scale: 0.98 }}
                    animate={{ opacity: 1, y: 0, scale: 1 }}
                    exit={{ opacity: 0, y: -20, scale: 0.98 }}
                    className="absolute top-full left-0 right-0 mt-4 bg-[#1f1f23] border border-white/10 rounded-3xl shadow-[0_40px_70px_-15px_rgba(0,0,0,0.8)] overflow-hidden z-[60] backdrop-blur-2xl bg-opacity-95"
                 >
-                    <div className="px-5 py-3 border-b border-white/5 bg-white/2">
-                      <span className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Encontrado na Live-Database</span>
+                    <div className="px-5 py-3 border-b border-white/5 bg-white/2 flex items-center justify-between">
+                      <span className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Banco de Dados (PC)</span>
+                      {isSearching && <Loader2 className="w-3 h-3 text-[#9146FF] animate-spin" />}
                     </div>
-                    {searchResults.map((result) => (
+
+                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                        {searchResults.length > 0 && searchResults.map((result) => (
+                            <button
+                                key={result.gameID}
+                                type="button"
+                                onClick={() => {
+                                    const posterUrl = result.steamAppID 
+                                        ? `https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${result.steamAppID}/library_600x900.jpg`
+                                        : result.thumb;
+                                    handleAddGame(result.external, posterUrl);
+                                }}
+                                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-all text-left group"
+                            >
+                                <div className="flex items-center gap-5">
+                                    <div className="w-10 h-14 rounded-lg overflow-hidden bg-black flex-shrink-0 border border-white/10 relative">
+                                        <img 
+                                            src={result.steamAppID 
+                                                ? `https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${result.steamAppID}/library_600x900.jpg`
+                                                : result.thumb} 
+                                            className="w-full h-full object-cover" 
+                                            referrerPolicy="no-referrer"
+                                        />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <span className="block font-bold text-[#efeff1] group-hover:text-[#9146FF] transition-colors truncate text-sm">
+                                          {result.external}
+                                      </span>
+                                      <span className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest mt-0.5 block">Resultado Automático</span>
+                                    </div>
+                                </div>
+                                <Plus className="w-4 h-4 text-neutral-600 group-hover:text-white" />
+                            </button>
+                        ))}
+
+                        {/* Opção Manual sempre presente se houver texto */}
                         <button
-                            key={result.gameID}
                             type="button"
-                            onClick={() => {
-                                // Se tiver steamAppID, usamos a imagem vertical do Steam (poster)
-                                // Caso contrário, usamos a thumb do CheapShark
-                                const posterUrl = result.steamAppID 
-                                    ? `https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${result.steamAppID}/library_600x900.jpg`
-                                    : result.thumb;
-                                handleAddGame(result.external, posterUrl);
-                            }}
-                            className="w-full flex items-center justify-between p-4 hover:bg-[#9146FF]/10 transition-all text-left group"
+                            onClick={() => handleAddGame(newGameName)}
+                            className={`w-full flex items-center justify-between p-4 hover:bg-[#9146FF]/20 transition-all text-left group ${searchResults.length > 0 ? 'border-t border-white/5' : ''}`}
                         >
                             <div className="flex items-center gap-5">
-                                <div className="w-12 h-18 rounded-lg overflow-hidden bg-black flex-shrink-0 border border-white/10 shadow-lg relative group-hover:border-[#9146FF]/30 transition-colors">
-                                    <img 
-                                        src={result.steamAppID 
-                                            ? `https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${result.steamAppID}/library_600x900.jpg`
-                                            : result.thumb} 
-                                        alt={result.external} 
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                                        referrerPolicy="no-referrer"
-                                    />
+                                <div className="w-10 h-14 rounded-lg bg-white/5 flex items-center justify-center text-neutral-600 flex-shrink-0 group-hover:bg-[#9146FF]/30 group-hover:text-white transition-colors">
+                                    <Plus className="w-5 h-5" />
                                 </div>
-                                <div className="min-w-0">
-                                  <span className="block font-bold text-[#efeff1] group-hover:text-[#9146FF] transition-colors truncate text-base">
-                                      {result.external}
+                                <div>
+                                  <span className="block font-bold text-[#efeff1] group-hover:text-[#9146FF] transition-colors truncate text-sm">
+                                      Adicionar "{newGameName}" manualmente
                                   </span>
-                                  <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest mt-1 block">Game Ready</span>
+                                  <span className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest mt-0.5 block">Para consoles ou atividades customizadas</span>
                                 </div>
                             </div>
-                            <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-neutral-400 group-hover:bg-[#9146FF] group-hover:text-white transition-all">
-                              <Plus className="w-5 h-5" />
-                            </div>
+                            <span className="text-[9px] font-black text-[#9146FF] uppercase opacity-0 group-hover:opacity-100 transition-opacity">Add Manual</span>
                         </button>
-                    ))}
+                    </div>
                 </motion.div>
             )}
           </AnimatePresence>
@@ -620,6 +669,16 @@ export default function App() {
                               <h3 className={`text-lg sm:text-xl font-bold truncate tracking-tight ${isLeader ? 'text-white' : 'text-neutral-200'}`}>
                                 {game.name}
                               </h3>
+                              <button
+                                onClick={() => {
+                                  setEditingGame(game);
+                                  setIsEditGameModalOpen(true);
+                                }}
+                                className="p-1.5 hover:bg-white/5 rounded text-neutral-600 hover:text-white transition-all"
+                                title="Editar jogo"
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </button>
                               {index === 0 && game.value > 0 && (
                                 <Trophy className="w-4 h-4 text-yellow-400" />
                               )}
@@ -662,6 +721,85 @@ export default function App() {
         </main>
       </div>
     </div>
+  );
+}
+
+function EditGameModal({ 
+  game, 
+  onConfirm, 
+  onCancel 
+}: { 
+  game: Game, 
+  onConfirm: (id: string, name: string, imageUrl: string) => void,
+  onCancel: () => void 
+}) {
+  const [name, setName] = useState(game.name);
+  const [imageUrl, setImageUrl] = useState(game.imageUrl || '');
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl"
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-[#18181b] border border-white/10 rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl ring-1 ring-white/5"
+      >
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-[#9146FF]/10 flex items-center justify-center text-[#9146FF]">
+            <Plus className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white">Editar Atividade</h2>
+            <p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest">Personalize o nome e o visual</p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest pl-1">Nome do Jogo/Atividade</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full bg-black/40 border border-white/5 focus:border-[#9146FF]/30 rounded-2xl px-4 py-3.5 text-sm text-white outline-none transition-all font-bold placeholder:text-neutral-700"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest pl-1">Link da Imagem (URL)</label>
+            <input
+              type="text"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="Cole o link de uma imagem (ex: do Google)"
+              className="w-full bg-black/40 border border-white/5 focus:border-[#9146FF]/30 rounded-2xl px-4 py-3.5 text-sm text-white outline-none transition-all font-medium placeholder:text-neutral-700"
+            />
+            <p className="text-[9px] text-neutral-600 font-medium ml-1">* Recomendamos links de imagens verticais (tipo poster).</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 mt-10">
+          <button
+            onClick={() => onConfirm(game.id, name, imageUrl)}
+            disabled={!name.trim()}
+            className="w-full py-4 rounded-2xl bg-[#9146FF] hover:bg-[#a970ff] text-white font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-[#9146FF]/20 active:scale-95 disabled:opacity-50"
+          >
+            Salvar Alterações
+          </button>
+          <button
+            onClick={onCancel}
+            className="w-full py-3 text-[10px] font-bold text-neutral-600 hover:text-neutral-400 transition-colors uppercase tracking-widest"
+          >
+            Voltar
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
