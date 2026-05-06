@@ -119,6 +119,7 @@ export default function App() {
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerInput, setTimerInput] = useState("05:00");
+  const [pendingBid, setPendingBid] = useState<{ gameId: string, amount: number } | null>(null);
 
   useEffect(() => {
     let interval: any;
@@ -980,21 +981,21 @@ export default function App() {
                 {formatTime(timerSeconds)}
               </div>
               
-              <div className="flex items-center gap-1 w-full p-1.5 bg-black/40 rounded-xl border border-white/5">
+              <div className="flex items-center gap-1 w-full p-1 bg-black/40 rounded-xl border border-white/5">
                 <input 
                   type="text" 
                   value={timerInput}
                   onChange={(e) => setTimerInput(e.target.value)}
                   placeholder="00:00"
                   disabled={isTimerRunning}
-                  className="w-16 bg-transparent border-none px-2 py-1 text-center font-mono text-xs text-white focus:outline-none disabled:opacity-30 placeholder:text-neutral-700"
+                  className="w-14 bg-transparent border-none px-1 py-1 text-center font-mono text-xs text-white focus:outline-none disabled:opacity-30 placeholder:text-neutral-700"
                 />
-                <div className="flex-1 h-px bg-white/5 mx-1" />
+                <div className="flex-1" />
                 <div className="flex items-center gap-1">
                   <button 
                     onClick={handleStartTimer}
                     title={isTimerRunning ? "Pausar" : "Iniciar"}
-                    className={`p-2 rounded-lg transition-all shadow-lg ${isTimerRunning 
+                    className={`p-1.5 rounded-lg transition-all shadow-lg ${isTimerRunning 
                       ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20' 
                       : 'bg-twitch/10 text-twitch hover:bg-twitch/20'}`}
                   >
@@ -1003,7 +1004,7 @@ export default function App() {
                   <button 
                     onClick={handleResetTimer}
                     title="Resetar"
-                    className="p-2 bg-white/5 text-neutral-500 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                    className="p-1.5 bg-white/5 text-neutral-500 hover:text-white hover:bg-white/10 rounded-lg transition-all"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                   </button>
