@@ -20,17 +20,22 @@ Com uma estética moderna inspirada na Twitch, o app permite que o público infl
 *   **Edição de Lances:** Corrija valores ou mude o destino de um lance caso o doador mude de ideia, com recalque automático de todos os rankings.
 *   **Ranking de Doadores:** Destaque para os maiores apoiadores (Top 5 Donators) da sessão.
 
-### 4. Visual "Stream-Ready"
-*   **Ranking em Tempo Real:** Jogos são ordenados automaticamente do mais votado para o menos votado.
-*   **Indicador de Líder:** Destaque visual e ícone de troféu para o jogo que está vencendo.
-*   **Contadores Globais:** Exibição clara do valor total arrecadado (Somatória absoluta de todos os lances).
+### 4. Ferramentas Integradas
+*   **Timer Setável:** Cronômetro customizável para gerenciar o tempo das rodadas ou metas da live, com funções de iniciar, pausar e resetar.
+*   **Visual "Stream-Ready":**
+    *   **Ranking em Tempo Real:** Jogos são ordenados automaticamente com animações fluidas de subida/descida.
+    *   **Destaque de Medalhas:** Ranking de 1º, 2º e 3º lugar com cores temáticas (Ouro, Prata e Bronze).
+    *   **Contadores Globais:** Exibição clara do valor total arrecadado.
 
 ## 🛠️ Tecnologias Utilizadas
 *   **React + TypeScript:** Interface robusta e performática.
 *   **Tailwind CSS:** Estilização moderna e responsiva.
-*   **Motion (Framer Motion):** Animações fluidas para transições de ranking e modais.
+*   **Motion (Framer Motion):** Animações fluidas para transições de ranking e modais com `layout projections`.
 *   **Lucide React:** Conjunto de ícones minimalistas.
-*   **LocalStorage:** Persistência de dados para que você não perca o leilão se fechar o navegador sem querer.
+*   **LocalStorage:** Persistência de dados local.
+*   **API Pública (IVR):** Integração direta para busca de dados de canais da Twitch.
 
 ---
 *Desenvolvido para transformar donation alerts em entretenimento real.*
+
+**Este site foi totalmente construído com Inteligência Artificial.**

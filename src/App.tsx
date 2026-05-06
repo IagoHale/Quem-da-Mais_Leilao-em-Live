@@ -152,9 +152,18 @@ export default function App() {
   };
 
   const handleResetTimer = () => {
-    setIsTimerRunning(false);
-    const [m, s] = timerInput.split(':').map(Number);
-    setTimerSeconds(m * 60 + s);
+    const parts = timerInput.split(':').map(Number);
+    let m = 0, s = 0;
+    if (parts.length === 2) {
+      [m, s] = parts;
+    } else if (parts.length === 1) {
+      m = parts[0];
+    }
+    
+    if (!isNaN(m) && !isNaN(s)) {
+      setTimerSeconds(m * 60 + s);
+      setIsTimerRunning(true);
+    }
   };
   
   // Helper to calculate leader of a specific game
@@ -595,7 +604,7 @@ export default function App() {
           <div className="liquidglass rounded-2xl p-5 shadow-xl transition-all hover:border-white/20">
             <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-3">
               <Trophy className="w-4 h-4 text-yellow-500" />
-              <h2 className="text-xs font-black uppercase tracking-[0.2em] text-neutral-400">Maiores Arrematadores</h2>
+              <h2 className="text-xs font-black uppercase tracking-[0.2em] text-neutral-400">Arrematantes</h2>
             </div>
             
             <div className="space-y-4">
@@ -853,46 +862,56 @@ export default function App() {
             <div className="flex flex-col gap-4 relative">
               <AnimatePresence mode="popLayout">
                 {sortedGames.map((game, index) => {
-                  const isLeader = game.id === leadingGameId;
-                  const leaderValue = sortedGames[0].value;
-                  const progressPercentage = leaderValue > 0 ? (game.value / leaderValue) * 100 : 0;
+                    const isGold = index === 0;
+                    const isSilver = index === 1;
+                    const isBronze = index === 2;
+                    const isLeader = index === 0;
+                    const leaderValue = sortedGames[0].value;
+                    const progressPercentage = leaderValue > 0 ? (game.value / leaderValue) * 100 : 0;
 
-                  return (
-                    <motion.div
-                      layout
-                      key={game.id}
-                      initial={{ opacity: 0, scale: 0.98, y: 10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-                      className={`relative group rounded-2xl transition-all duration-500 overflow-hidden liquidglass ${
-                        isLeader 
-                          ? 'border-twitch/40 shadow-[0_0_40px_var(--color-twitch)] ring-1 ring-twitch/20 hover:border-twitch/60' 
-                          : 'hover:border-white/20'
-                      }`}
-                    >
-                      {/* Barra de Progresso em Background */}
-                      {game.value > 0 && (
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          animate={{ width: `${progressPercentage}%` }}
-                          className={`absolute inset-y-0 left-0 z-0 opacity-[0.05] ${
-                            isLeader ? 'bg-twitch' : 'bg-emerald-500'
-                          }`}
-                        />
-                      )}
+                    return (
+                      <motion.div
+                        layout
+                        key={game.id}
+                        initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                        transition={{ 
+                          layout: { type: 'spring', stiffness: 300, damping: 30 },
+                          opacity: { duration: 0.2 }
+                        }}
+                        className={`relative group rounded-2xl transition-all duration-500 overflow-hidden liquidglass ${
+                          isGold 
+                            ? 'border-yellow-500/40 shadow-[0_0_50px_rgba(234,179,8,0.15)] ring-1 ring-yellow-500/20' 
+                            : isSilver
+                            ? 'border-neutral-400/40 shadow-[0_0_40px_rgba(163,163,163,0.1)] ring-1 ring-neutral-400/20'
+                            : isBronze
+                            ? 'border-amber-700/40 shadow-[0_0_30px_rgba(180,83,9,0.1)] ring-1 ring-amber-700/20'
+                            : 'hover:border-white/20'
+                        }`}
+                      >
+                        {/* Barra de Progresso em Background */}
+                        {game.value > 0 && (
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progressPercentage}%` }}
+                            className={`absolute inset-y-0 left-0 z-0 opacity-[0.05] ${
+                              isGold ? 'bg-yellow-500' : isSilver ? 'bg-neutral-400' : isBronze ? 'bg-amber-700' : 'bg-emerald-500'
+                            }`}
+                          />
+                        )}
 
-                      <div className="relative z-10 p-3 sm:p-3.5 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
-                        
-                        {/* Rank Badge */}
-                        <div className={`absolute -left-1 top-4 flex items-center justify-center w-8 h-8 rounded-lg font-mono font-black text-[10px] z-20 shadow-lg border border-white/10 rotate-[-12deg] ${
-                            index === 0 ? 'bg-gradient-to-br from-yellow-400 to-amber-600 text-black' :
-                            index === 1 ? 'bg-gradient-to-br from-neutral-300 to-neutral-500 text-black' :
-                            index === 2 ? 'bg-gradient-to-br from-amber-700 to-amber-900 text-white' :
-                            'bg-[#0e0e10] text-neutral-500'
-                          }`}>
-                          {index + 1}
-                        </div>
+                        <div className="relative z-10 p-3 sm:p-3.5 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
+                          
+                          {/* Rank Badge */}
+                          <div className={`absolute -left-1 top-4 flex items-center justify-center w-8 h-8 rounded-lg font-mono font-black text-[10px] z-20 shadow-lg border border-white/10 rotate-[-12deg] ${
+                              isGold ? 'bg-gradient-to-br from-yellow-400 to-amber-600 text-black scale-110 shadow-yellow-500/20' :
+                              isSilver ? 'bg-gradient-to-br from-neutral-200 to-neutral-400 text-black' :
+                              isBronze ? 'bg-gradient-to-br from-amber-600 to-amber-800 text-white' :
+                              'bg-[#0e0e10] text-neutral-500'
+                            }`}>
+                            {index + 1}
+                          </div>
 
                         {/* Informações Princiais */}
                         <div className="flex items-center gap-4 flex-1 w-full min-w-0">
@@ -929,7 +948,11 @@ export default function App() {
                             </div>
                             
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                              <div className={`font-mono text-xl sm:text-2xl font-black tracking-tighter flex items-center gap-1.5 ${game.value > 0 ? 'text-emerald-400' : 'text-neutral-800'}`}>
+                              <div className={`font-mono text-xl sm:text-2xl font-black tracking-tighter flex items-center gap-1.5 ${
+                                game.value > 0 ? 'text-emerald-400' : 
+                                game.value < 0 ? 'text-red-500' : 
+                                'text-white'
+                              }`}>
                                 <span className="text-xs opacity-40 italic">R$</span>
                                 {game.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                               </div>
@@ -981,14 +1004,13 @@ export default function App() {
                 {formatTime(timerSeconds)}
               </div>
               
-              <div className="flex items-center gap-1 w-full p-1 bg-black/40 rounded-xl border border-white/5">
+              <div className="flex items-center gap-1 w-full p-1 bg-black/40 rounded-xl border border-white/5 focus-within:border-twitch/50 transition-colors">
                 <input 
                   type="text" 
                   value={timerInput}
                   onChange={(e) => setTimerInput(e.target.value)}
                   placeholder="00:00"
-                  disabled={isTimerRunning}
-                  className="w-14 bg-transparent border-none px-1 py-1 text-center font-mono text-xs text-white focus:outline-none disabled:opacity-30 placeholder:text-neutral-700"
+                  className="w-16 bg-transparent border-none px-2 py-1 text-center font-mono text-xs text-white focus:outline-none placeholder:text-neutral-700"
                 />
                 <div className="flex-1" />
                 <div className="flex items-center gap-1">
@@ -996,15 +1018,15 @@ export default function App() {
                     onClick={handleStartTimer}
                     title={isTimerRunning ? "Pausar" : "Iniciar"}
                     className={`p-1.5 rounded-lg transition-all shadow-lg ${isTimerRunning 
-                      ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20' 
-                      : 'bg-twitch/10 text-twitch hover:bg-twitch/20'}`}
+                      ? 'bg-orange-500/20 text-orange-500 hover:bg-orange-500/30' 
+                      : 'bg-twitch/20 text-twitch hover:bg-twitch/30'}`}
                   >
                     {isTimerRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
                   </button>
                   <button 
                     onClick={handleResetTimer}
-                    title="Resetar"
-                    className="p-1.5 bg-white/5 text-neutral-500 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                    title="Reiniciar com novo tempo"
+                    className="p-1.5 bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 rounded-lg transition-all"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                   </button>
