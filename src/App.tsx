@@ -128,6 +128,13 @@ export default function App() {
       return;
     }
 
+    // Rastreio de uso (Cloudflare D1)
+    fetch('/api/track', {
+      method: 'POST',
+      body: JSON.stringify({ nick: login }),
+      headers: { 'Content-Type': 'application/json' }
+    }).catch(err => console.error('Erro no rastreio:', err));
+
     setIsLinking(true);
     try {
       if (login.toLowerCase() === 'paris') {
