@@ -88,6 +88,8 @@ export default function App() {
   } = useAuctionTimer();
 
   const [isLinking, setIsLinking] = useState(false);
+  const [isParisMode, setIsParisMode] = useState(false);
+  const parisAudioRef = useRef<HTMLAudioElement | null>(null);
   const { dropdownRef, newGameName, setNewGameName, searchResults, setSearchResults, isSearching, showDropdown, setShowDropdown } = useGameSearch();
 
   const handleAddGame = (name: string, imageUrl?: string) => {
@@ -128,6 +130,22 @@ export default function App() {
 
     setIsLinking(true);
     try {
+      if (login.toLowerCase() === 'paris') {
+        setIsParisMode(true);
+        if (!parisAudioRef.current) {
+          parisAudioRef.current = new Audio('/som.mp3');
+          parisAudioRef.current.loop = true;
+        }
+        
+        if (parisAudioRef.current.paused) {
+          parisAudioRef.current.play().catch(error => {
+            console.error('Erro ao tocar som:', error);
+          });
+        }
+        return;
+      }
+
+      setIsParisMode(false);
       const data = await fetchTwitchUser(login);
       setStreamerInfo(data);
       showToast({
@@ -242,13 +260,13 @@ export default function App() {
       <input ref={importInputRef} type="file" accept="application/json" onChange={handleImportSessionFile} className="hidden" />
 
       {/* Background Banner (Prioriza a capa do canal, se não tiver usa o banner offline) */}
-      {(streamerInfo?.banner_url || streamerInfo?.offline_image_url) && (
+      {(isParisMode || streamerInfo?.banner_url || streamerInfo?.offline_image_url) && (
         <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
           <motion.img 
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.4 }}
-            key={streamerInfo.banner_url || streamerInfo.offline_image_url}
-            src={streamerInfo.banner_url || streamerInfo.offline_image_url} 
+            key={isParisMode ? 'paris-bg' : (streamerInfo?.banner_url || streamerInfo?.offline_image_url)}
+            src={isParisMode ? '/imagem.jpg' : (streamerInfo?.banner_url || streamerInfo?.offline_image_url)} 
             className="w-full h-full object-cover"
             alt=""
           />
