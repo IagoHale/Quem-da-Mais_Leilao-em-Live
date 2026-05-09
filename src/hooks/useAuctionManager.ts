@@ -25,29 +25,31 @@ function readJsonFromStorage<T>(key: string): T | null {
 
 function rebuildAuctionState(input: AuctionState): AuctionState {
   const donations = Array.isArray(input.donations) ? input.donations : [];
-  const games = Array.isArray(input.games) ? input.games : [];
-  const donationsByGameId = new Map<string, Donation[]>();
+    const games = Array.isArray(input.games) ? input.games : [];
+    const donationsByGameId = new Map<string, Donation[]>();
 
-  donations.forEach((donation) => {
-    const current = donationsByGameId.get(donation.gameId) ?? [];
-    current.push(donation);
-    donationsByGameId.set(donation.gameId, current);
-  });
+    donations.forEach((donation) => {
+      const current = donationsByGameId.get(donation.gameId) ?? [];
+      current.push(donation);
+      donationsByGameId.set(donation.gameId, current);
+    });
 
-  return {
-    donations,
-    donators: calculateDonatorTotals(donations),
-    games: games.map((game) => {
-      const gameDonations = donationsByGameId.get(game.id) ?? [];
-      const value = gameDonations.reduce((total, donation) => total + donation.amount, 0);
+    return {
+      donations,
+      donators: calculateDonatorTotals(donations),
+      games: games.map((game) => {
+        const gameDonations = donationsByGameId.get(game.id) ?? [];
+        const value = gameDonations.reduce((total, donation) => total + donation.amount, 0);
+        const totalRaised = gameDonations.reduce((total, donation) => total + Math.abs(donation.amount), 0);
 
-      return {
-        ...game,
-        value,
-        lastDonator: gameDonations.length > 0 ? calculateLeader(game.id, donations) : undefined,
-      };
-    }),
-  };
+        return {
+          ...game,
+          value,
+          totalRaised,
+          lastDonator: gameDonations.length > 0 ? calculateLeader(game.id, donations) : undefined,
+        };
+      }),
+    };
 }
 
 function loadInitialAuctionState(): AuctionState {
@@ -309,7 +311,7 @@ export function useAuctionManager(canMutate = true) {
 
   const { games, donators, donations } = auctionState;
   const sortedGames = [...games].sort((a, b) => b.value - a.value);
-  const sortedDonators = [...donators].sort((a, b) => b.total - a.total).slice(0, 5);
+  const sortedDonators = [...donators].sort((a, b) => b.total - a.total).slice(0, 10);
   const totalRaised = donations.reduce((acc, donation) => acc + Math.abs(donation.amount), 0);
 
   return {

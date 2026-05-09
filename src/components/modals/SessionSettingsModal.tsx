@@ -2,10 +2,14 @@ import { Download, Settings2, Upload, X } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export function SessionSettingsModal({
+  performanceMode,
+  onTogglePerformanceMode,
   onExport,
   onImport,
   onClose,
 }: {
+  performanceMode: 'lite' | 'beautiful';
+  onTogglePerformanceMode: (mode: 'lite' | 'beautiful') => void;
   onExport: () => void;
   onImport: () => void;
   onClose: () => void;
@@ -78,6 +82,37 @@ export function SessionSettingsModal({
               <h3 className="mt-2 text-lg font-bold text-white">Restaurar snapshot</h3>
               <p className="mt-2 text-xs leading-relaxed text-neutral-300">Carrega um arquivo `.json` exportado pelo app e substitui o estado atual do leilão.</p>
             </button>
+          </div>
+
+          <div className="mt-8 border-t border-white/5 pt-6">
+            <h3 className="text-sm font-bold text-white mb-4">Aparência e Desempenho</h3>
+            <div className="flex bg-neutral-900/50 rounded-2xl p-1.5 border border-white/5">
+              <button
+                onClick={() => onTogglePerformanceMode('lite')}
+                className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all ${
+                  performanceMode === 'lite' 
+                    ? 'bg-neutral-700 text-white shadow-md' 
+                    : 'text-neutral-500 hover:text-neutral-300'
+                }`}
+              >
+                Modo Lite
+              </button>
+              <button
+                onClick={() => onTogglePerformanceMode('beautiful')}
+                className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all ${
+                  performanceMode === 'beautiful' 
+                    ? 'bg-twitch text-white shadow-md' 
+                    : 'text-neutral-500 hover:text-neutral-300'
+                }`}
+              >
+                Modo Bonito
+              </button>
+            </div>
+            <p className="mt-3 text-[11px] text-neutral-500">
+              {performanceMode === 'lite' 
+                ? 'Modo Lite ativado. Efeitos pesados como desfoque (blur) foram desativados para melhorar o desempenho.'
+                : 'Modo Bonito ativado. Para evitar travamentos, certifique-se de que a aceleração de hardware do seu navegador está ligada.'}
+            </p>
           </div>
         </div>
       </motion.div>

@@ -4,6 +4,7 @@ export type Game = {
   value: number;
   imageUrl?: string;
   lastDonator?: string;
+  totalRaised?: number;
 };
 
 export type Donator = {

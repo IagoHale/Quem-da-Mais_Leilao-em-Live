@@ -86,7 +86,7 @@ export function LeftSidebar({
           <h2 className="text-xs font-black uppercase tracking-[0.2em] text-neutral-400">Arrematantes</h2>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-1.5">
           {sortedDonators.length === 0 ? (
             <p className="text-[10px] text-neutral-600 font-bold uppercase text-center py-4">Nenhum lance ainda</p>
           ) : (
@@ -112,7 +112,7 @@ export function LeftSidebar({
                             ? 'bg-neutral-300 text-black border-neutral-200'
                             : isBronze
                               ? 'bg-amber-700 text-white border-amber-600'
-                              : 'text-neutral-700 border-white/5 bg-white/5'
+                              : 'text-white border-white/5 bg-white/5'
                       }`}
                     >
                       {idx + 1}

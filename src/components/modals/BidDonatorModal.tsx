@@ -57,13 +57,16 @@ export function BidDonatorModal({
 
         {donators.length > 0 && (
           <div className="mb-4 sm:mb-6">
-            <h3 className="text-[9px] sm:text-[10px] font-black text-neutral-600 uppercase tracking-widest mb-2 sm:mb-3 italic">Sugestões (Recentes)</h3>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2 max-h-24 overflow-y-auto pr-1 custom-scrollbar">
-              {donators.slice(0, 10).map((donator) => (
+            <h3 className="text-[9px] sm:text-[10px] font-black text-neutral-600 uppercase tracking-widest mb-2 sm:mb-3 italic">Sugestões</h3>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 pr-1">
+              {donators
+                .filter(d => d.name.toLowerCase().includes(name.toLowerCase()))
+                .slice(0, 15)
+                .map((donator) => (
                 <button
                   key={donator.name}
                   onClick={() => setName(donator.name)}
-                  className={`px-2.5 py-1 sm:px-3 sm:py-1.5 border rounded-lg text-[9px] sm:text-[10px] font-bold transition-all max-w-full truncate ${
+                  className={`px-2.5 py-1 sm:px-3 sm:py-1.5 border rounded-lg text-[10px] sm:text-[11px] font-bold transition-all max-w-full truncate ${
                     name === donator.name
                       ? 'bg-twitch border-twitch text-white'
                       : 'bg-white/5 border-white/5 text-neutral-400 hover:border-white/10 hover:text-white'

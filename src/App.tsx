@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Gavel, Github } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { GameList } from './components/auction/GameList';
 import { useToast } from './components/feedback/ToastProvider';
 import { AppHeader } from './components/layout/AppHeader';
@@ -11,6 +11,7 @@ import { EditGameModal } from './components/modals/EditGameModal';
 import { RemoveGameModal } from './components/modals/RemoveGameModal';
 import { ResetModal } from './components/modals/ResetModal';
 import { SessionSettingsModal } from './components/modals/SessionSettingsModal';
+import { PerformanceWelcomeModal } from './components/modals/PerformanceWelcomeModal';
 import { LeftSidebar } from './components/sidebar/LeftSidebar';
 import { RightSidebar } from './components/sidebar/RightSidebar';
 import { useAuctionCoordinator } from './hooks/useAuctionCoordinator';
@@ -60,7 +61,17 @@ export default function App() {
   const [showTotal, setShowTotal] = useState(true);
   const isAnyModalOpen = isResetModalOpen || isSettingsModalOpen || isAuctionStatsModalOpen || isBidModalOpen || isEditDonationModalOpen || isEditGameModalOpen || isRemoveGameModalOpen;
   const [streamerInfo, setStreamerInfo] = useLocalStorageState<StreamerInfo | null>(STORAGE_KEYS.streamerInfo, null);
+  const [performanceMode, setPerformanceMode] = useLocalStorageState<'lite' | 'beautiful'>('qmd_performance_mode', 'beautiful');
+  const [hasSeenWelcome, setHasSeenWelcome] = useLocalStorageState<boolean>('qmd_has_seen_welcome', false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (performanceMode === 'lite') {
+      document.documentElement.classList.add('performance-lite');
+    } else {
+      document.documentElement.classList.remove('performance-lite');
+    }
+  }, [performanceMode]);
 
   // Efeito para injetar a cor primária do streamer no CSS
   useEffect(() => {
@@ -129,11 +140,11 @@ export default function App() {
     }
 
     // Rastreio de uso (Cloudflare D1)
-    fetch('/api/track', {
+    fetch('/api/estatisticas', {
       method: 'POST',
       body: JSON.stringify({ nick: login }),
       headers: { 'Content-Type': 'application/json' }
-    }).catch(err => console.error('Erro no rastreio:', err));
+    }).catch(err => console.error('Erro no registro de estatística:', err));
 
     setIsLinking(true);
     try {
@@ -263,8 +274,23 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0e0e10] text-[#efeff1] font-sans selection:bg-twitch/30 relative overflow-x-hidden">
-      <input ref={importInputRef} type="file" accept="application/json" onChange={handleImportSessionFile} className="hidden" />
+    <MotionConfig 
+      reducedMotion={performanceMode === 'lite' ? 'always' : 'user'}
+      transition={performanceMode === 'lite' ? { duration: 0 } : undefined}
+    >
+      <div className="min-h-screen flex flex-col bg-[#0e0e10] text-[#efeff1] font-sans selection:bg-twitch/30 relative overflow-x-hidden">
+        <input ref={importInputRef} type="file" accept="application/json" onChange={handleImportSessionFile} className="hidden" />
+
+        <AnimatePresence>
+          {!hasSeenWelcome && (
+            <PerformanceWelcomeModal 
+              onSelectMode={(mode) => {
+                setPerformanceMode(mode);
+                setHasSeenWelcome(true);
+              }} 
+            />
+          )}
+        </AnimatePresence>
 
       {/* Background Banner (Prioriza a capa do canal, se não tiver usa o banner offline) */}
       {(isParisMode || streamerInfo?.banner_url || streamerInfo?.offline_image_url) && (
@@ -378,6 +404,7 @@ export default function App() {
           <GameList
             games={games}
             sortedGames={sortedGames}
+            showTotal={showTotal}
             addBid={(id, amount) => {
               if (!addBid(id, amount)) return;
               setIsBidModalOpen(true);
@@ -446,7 +473,9 @@ export default function App() {
                 borderColor: 'color-mix(in srgb, var(--color-twitch) 28%, transparent)',
                 background:
                   'linear-gradient(135deg, color-mix(in srgb, var(--color-twitch) 22%, transparent), rgba(255,255,255,0.08))',
-                boxShadow: '0 20px 70px rgba(0,0,0,0.35), 0 0 28px color-mix(in srgb, var(--color-twitch) 28%, transparent)',
+                boxShadow: performanceMode === 'lite' 
+                  ? 'none' 
+                  : '0 20px 70px rgba(0,0,0,0.35), 0 0 28px color-mix(in srgb, var(--color-twitch) 28%, transparent)',
               }}
             >
               <Gavel className="h-4 w-4" style={{ color: 'color-mix(in srgb, var(--color-twitch) 72%, white)' }} />
@@ -458,7 +487,13 @@ export default function App() {
 
       <AnimatePresence>
         {isSettingsModalOpen && (
-          <SessionSettingsModal onExport={handleExportSession} onImport={handleImportSessionClick} onClose={() => setIsSettingsModalOpen(false)} />
+          <SessionSettingsModal 
+            performanceMode={performanceMode}
+            onTogglePerformanceMode={setPerformanceMode}
+            onExport={handleExportSession} 
+            onImport={handleImportSessionClick} 
+            onClose={() => setIsSettingsModalOpen(false)} 
+          />
         )}
       </AnimatePresence>
 
@@ -510,5 +545,6 @@ export default function App() {
         </a>
       </footer>
     </div>
+    </MotionConfig>
   );
 }

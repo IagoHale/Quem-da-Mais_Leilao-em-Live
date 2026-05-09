@@ -6,12 +6,13 @@ import type { Game } from '../../types/auction';
 type GameListProps = {
   games: Game[];
   sortedGames: Game[];
+  showTotal: boolean;
   addBid: (id: string, amount: number) => void;
   onEditGame: (game: Game) => void;
   onDeleteGame: (game: Game) => void;
 };
 
-export function GameList({ games, sortedGames, addBid, onEditGame, onDeleteGame }: GameListProps) {
+export function GameList({ games, sortedGames, showTotal, addBid, onEditGame, onDeleteGame }: GameListProps) {
   return (
     <div className="flex flex-col gap-4 min-h-[600px] w-full flex-grow transition-all duration-500">
       {games.length === 0 ? (
@@ -116,13 +117,21 @@ export function GameList({ games, sortedGames, addBid, onEditGame, onDeleteGame 
                         </div>
 
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                          <div
-                            className={`font-mono text-xl sm:text-2xl font-black tracking-tighter flex items-center gap-1.5 ${
-                              game.value > 0 ? 'text-emerald-400' : game.value < 0 ? 'text-red-500' : 'text-white'
-                            }`}
-                          >
-                            <span className="text-xs opacity-40 italic">R$</span>
-                            {game.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          <div className="flex flex-col">
+                            <div
+                              className={`font-mono text-xl sm:text-2xl font-black tracking-tighter flex items-center gap-1.5 ${
+                                game.value > 0 ? 'text-emerald-400' : game.value < 0 ? 'text-red-500' : 'text-white'
+                              }`}
+                            >
+                              <span className="text-xs opacity-40 italic">R$</span>
+                              {game.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </div>
+                            
+                            {game.totalRaised !== undefined && game.totalRaised > 0 && (
+                              <div className="text-[9px] text-neutral-500 font-bold tracking-widest uppercase mt-0.5">
+                                Arrecadado: R$ {showTotal ? game.totalRaised.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '****'}
+                              </div>
+                            )}
                           </div>
                           {game.lastDonator && <span className="text-[9px] font-black text-neutral-500 uppercase tracking-widest truncate bg-white/5 px-2 py-1 rounded">Líder: {game.lastDonator}</span>}
                         </div>

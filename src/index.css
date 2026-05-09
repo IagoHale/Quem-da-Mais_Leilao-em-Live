@@ -12,6 +12,28 @@
 }
 
 @layer base {
+  :root {
+    --glass-blur: 64px;
+    --glass-bg-opacity: 0.4;
+  }
+  
+  :root.performance-lite {
+    --glass-blur: 0px;
+    --glass-bg-opacity: 0.95;
+  }
+  
+  /* Desativação bruta de todas as animações CSS e Transições no modo lite */
+  :root.performance-lite *,
+  :root.performance-lite *::before,
+  :root.performance-lite *::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
   body {
     @apply bg-[#0e0e10] text-[#efeff1] selection:bg-[#9146FF]/30;
   }
@@ -48,7 +70,10 @@
 
 @layer utilities {
   .liquidglass {
-    @apply bg-neutral-900/40 backdrop-blur-3xl border border-white/5 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.03)];
+    background-color: rgba(23, 23, 23, var(--glass-bg-opacity));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    @apply border border-white/5 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.03)];
     background-image: linear-gradient(
       135deg,
       rgba(255, 255, 255, 0.05) 0%,
