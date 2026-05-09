@@ -6,7 +6,6 @@ O **QUEM DA MAIS** é um sistema de LEILÃO para streamers, projetado para criad
 ## 🔒 Privacidade e Dados
 *   **Sem Integrações Externas:** O Sistema depende de uma pessoa adicionando os lances manualmente. não há conexão com serviços de terceiros para processar lances.
 *   **Sem Login:** Não é necessário criar conta ou realizar login.
-*   **Armazenamento Local:** Nenhum dado é salvo em bancos de dados externos. Toda a sessão do leilão é salva no **cache local (LocalStorage)** do navegador.
 
 ## 🚀 Principais Funcionalidades
 
