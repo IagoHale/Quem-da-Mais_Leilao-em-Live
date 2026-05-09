@@ -13,11 +13,27 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       });
     }
 
-    // Insere no banco de dados D1
-    // O binding 'DB' deve estar configurado no painel da Cloudflare
+    // Gera o horário de Brasília formatado (YYYY-MM-DD HH:MM:SS)
+    const brazilTime = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).format(new Date());
+
+    // O formato do pt-BR vem como DD/MM/YYYY, HH:MM:SS, vamos converter para YYYY-MM-DD HH:MM:SS
+    const [date, time] = brazilTime.split(', ');
+    const [day, month, year] = date.split('/');
+    const formattedDate = `${year}-${month}-${day} ${time}`;
+
+    // Insere no banco de dados D1 usando o horário formatado
     await context.env.DB.prepare(
-      "INSERT INTO usage_logs (nick) VALUES (?)"
-    ).bind(nick).run();
+      "INSERT INTO usage_logs (nick, created_at) VALUES (?, ?)"
+    ).bind(nick, formattedDate).run();
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { 
