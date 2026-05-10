@@ -514,6 +514,18 @@ export default function App() {
 
       <footer className="fixed bottom-0 left-0 right-0 py-2.5 border-t border-white/5 bg-transparent backdrop-blur-md flex flex-row items-center justify-center gap-4 z-[100] opacity-50 hover:opacity-100 transition-opacity">
         <span className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest">
+          Idealizado por{' '}
+          <a
+            href="https://www.twitch.tv/branca"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-neutral-400 transition-colors hover:text-white"
+          >
+            Branca
+          </a>
+        </span>
+        <div className="hidden sm:block h-3 w-[1px] bg-white/10" />
+        <span className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest">
           Vibecodado por{' '}
           <a
             href="https://bsky.app/profile/iagohale.bsky.social"
