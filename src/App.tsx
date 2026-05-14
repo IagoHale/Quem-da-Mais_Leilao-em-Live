@@ -98,6 +98,20 @@ export default function App() {
     importTimerState,
   } = useAuctionTimer();
 
+  // Registra estatística de uso quando o streamerInfo já existe no localStorage (visita de retorno)
+  useEffect(() => {
+    const alreadyTrackedThisSession = sessionStorage.getItem('qmd_tracked');
+    if (streamerInfo?.login && !alreadyTrackedThisSession) {
+      sessionStorage.setItem('qmd_tracked', '1');
+      fetch('/api/stats', {
+        method: 'POST',
+        body: JSON.stringify({ nick: streamerInfo.login }),
+        headers: { 'Content-Type': 'application/json' }
+      }).catch(err => console.error('Erro no registro de estatística (retorno):', err));
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // ^ Roda apenas uma vez na montagem do componente
+
   const [isLinking, setIsLinking] = useState(false);
   const [isParisMode, setIsParisMode] = useState(false);
   const parisAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -140,7 +154,8 @@ export default function App() {
     }
 
     // Rastreio de uso (Cloudflare D1)
-    fetch('/api/estatisticas', {
+    sessionStorage.setItem('qmd_tracked', '1');
+    fetch('/api/stats', {
       method: 'POST',
       body: JSON.stringify({ nick: login }),
       headers: { 'Content-Type': 'application/json' }
